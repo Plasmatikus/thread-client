@@ -29,12 +29,47 @@ namespace Client
         public static XElement GetDirectoryXML(DirectoryInfo dir)
         {
             //Einfügen des aktuellen Verzeichnisses in die Struktur
-            var DirXML = new XElement("dir", new XAttribute("name", dir.Name));
+            var DirXML = new XElement("verzeichnis", new XAttribute("name", dir.Name));
             
             //Schreiben der Dateien des Verzeichnisses ins XML
             foreach (var file in dir.GetFiles())
             {
-                DirXML.Add(new XElement("file", new XAttribute("name", file.Name)));
+                //Konvertieren der Dateigröße von Byte in passende Einheit
+                string filesize = "";
+                long filelenght = file.Length;
+                //kleiner Hack um Datentypbeschränkung in If-Bedingungen zu umgehen
+                //Nachträglich konsequenterweise für alle Größen nachgetragen
+                int B = 1024;
+                int kB = 1024 * 1024;
+                int MB = 1024 * 1024 * 1024;
+                long GB = MB * 1024;
+                //Entscheidungsbaum uns Stringformatierung
+                if (filelenght / B == 0)
+                {
+                    filesize = filelenght + "B";
+                }
+                else if(filelenght / kB == 0)
+                {
+                    filelenght = filelenght / B;
+                    filesize = filelenght + "kB";
+                }
+                else if (filelenght / MB == 0)
+                {
+                    filelenght = filelenght / kB;
+                    filesize = filelenght + "MB";
+                }
+                else if (filelenght / GB == 0)
+                {
+                    filelenght = filelenght / MB;
+                    filesize = filelenght + "GB";
+                }
+                else
+                {
+                    filelenght = filelenght / GB;
+                    filesize = filelenght + "TB";
+                }
+
+                DirXML.Add(new XElement("datei", new XAttribute("name", file.Name), new XAttribute("groesse", filesize)));
             }
 
             //Rekursiver Aufruf zur Behandlung der Ordner
