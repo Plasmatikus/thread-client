@@ -22,7 +22,7 @@ namespace Client
         //Semaphor zur steuerung der Anzahl paralleler Threads
         public System.Threading.Semaphore S;
         private DirectoryInfo _rootDir;
-        private int _parallelThreads;
+        //private int _parallelThreads;
         private string _saveDir;
         private string _saveFile;
         #endregion
@@ -36,6 +36,8 @@ namespace Client
             S = new System.Threading.Semaphore(parallelThreads, parallelThreads);
         }
         #endregion
+
+        #region Methoden
         //Controller für das Multithreading
         public void Controller()
         {
@@ -117,9 +119,13 @@ namespace Client
                 int B = 1024;
                 int kB = 1024 * 1024;
                 int MB = 1024 * 1024 * 1024;
-                long GB = MB * 1024;
+                long GB = (long)MB * 1024;
                 //Entscheidungsbaum uns Stringformatierung
-                if (filelenght / B == 0)
+                if (filelenght == 0)
+                {
+                    filesize = "0B";
+                }
+                else if (filelenght / B == 0)
                 {
                     filesize = filelenght + "B";
                 }
@@ -197,58 +203,77 @@ namespace Client
         {
             //Einfügen des aktuellen Verzeichnisses in die Struktur
             var DirXML = new XElement("verzeichnis", new XAttribute("name", dir.Name));
-            
-            //Schreiben der Dateien des Verzeichnisses ins XML
-            foreach (var file in dir.GetFiles())
+            try
             {
-                //Konvertieren der Dateigröße von Byte in passende Einheit
-                string filesize = "";
-                long filelenght = file.Length;
-                //kleiner Hack um Datentypbeschränkung in If-Bedingungen zu umgehen
-                //Nachträglich konsequenterweise für alle Größen nachgetragen
-                int B = 1024;
-                int kB = 1024 * 1024;
-                int MB = 1024 * 1024 * 1024;
-                long GB = MB * 1024;
-                //Entscheidungsbaum uns Stringformatierung
-                if (filelenght / B == 0)
+                //Schreiben der Dateien des Verzeichnisses ins XML
+                foreach (var file in dir.GetFiles())
                 {
-                    filesize = filelenght + "B";
-                }
-                else if(filelenght / kB == 0)
-                {
-                    filelenght = filelenght / B;
-                    filesize = filelenght + "kB";
-                }
-                else if (filelenght / MB == 0)
-                {
-                    filelenght = filelenght / kB;
-                    filesize = filelenght + "MB";
-                }
-                else if (filelenght / GB == 0)
-                {
-                    filelenght = filelenght / MB;
-                    filesize = filelenght + "GB";
-                }
-                else
-                {
-                    filelenght = filelenght / GB;
-                    filesize = filelenght + "TB";
-                }
+                    //Konvertieren der Dateigröße von Byte in passende Einheit
+                    string filesize = "";
+                    long filelenght = file.Length;
+                    //kleiner Hack um Datentypbeschränkung in If-Bedingungen zu umgehen
+                    //Nachträglich konsequenterweise für alle Größen nachgetragen
+                    int B = 1024;
+                    int kB = 1024 * 1024;
+                    int MB = 1024 * 1024 * 1024;
+                    long GB = (long)MB * 1024;
+                    //Entscheidungsbaum uns Stringformatierung
+                    if (filelenght / B == 0)
+                    {
+                        filesize = filelenght + "B";
+                    }
+                    else if (filelenght / kB == 0)
+                    {
+                        filelenght = filelenght / B;
+                        filesize = filelenght + "kB";
+                    }
+                    else if (filelenght / MB == 0)
+                    {
+                        filelenght = filelenght / kB;
+                        filesize = filelenght + "MB";
+                    }
+                    else if (filelenght / GB == 0)
+                    {
+                        filelenght = filelenght / MB;
+                        filesize = filelenght + "GB";
+                    }
+                    else
+                    {
+                        filelenght = filelenght / GB;
+                        filesize = filelenght + "TB";
+                    }
 
-                DirXML.Add(new XElement("datei", new XAttribute("name", file.Name), new XAttribute("groesse", filesize)));
+                    DirXML.Add(new XElement("datei", new XAttribute("name", file.Name), new XAttribute("groesse", filesize)));
+                }
             }
-
+            catch (System.UnauthorizedAccessException)
+            {
+                DirXML.Add(new XElement("datei", new XAttribute("Fehler", "Zugriff verweigert")));
+            }
+            catch (Exception e)
+            {
+                DirXML.Add(new XElement("datei", new XAttribute("Exception", e)));
+            }
             //Rekursiver Aufruf zur Behandlung der Ordner
-            foreach (var subDir in dir.GetDirectories())
+            try
             {
-                DirXML.Add(GetDirectoryXML(subDir));
+                foreach (var subDir in dir.GetDirectories())
+                {
+                    DirXML.Add(GetDirectoryXML(subDir));
+                }
             }
-
+            catch (System.UnauthorizedAccessException)
+            {
+                DirXML.Add(new XElement("verzeichnis", new XAttribute("Fehler", "Zugriff verweigert")));
+            }
+            catch (Exception e)
+            {
+                DirXML.Add(new XElement("verzeichnis", new XAttribute("Exception", e)));
+            }
             //Rückgabe des XML der Odernerstruktur als XElement
             return DirXML;
-        } 
-
+        }
+        #endregion
 
     }
 }
