@@ -61,13 +61,35 @@ namespace Client
             table.Columns.Add(column);
             #endregion
 
-            #region Threadstarter
+            #region Threadhandling
+            //Ermitteln der Anzahl an Ordnern im Root Verzeichnis (Aus management Gründen)
+            int folderCount = 0;
+            foreach (var subDir in _rootDir.GetDirectories())
+            {
+                folderCount++;
+            }
+            //
+            ManualResetEvent resetEvent = new ManualResetEvent(false);
+            int toProcess = folderCount;
             //Auslesen der Root-Verzeichnisses und ausführen der entsprechenden Worker
             foreach (var subDir in _rootDir.GetDirectories())
             {
-                Thread thread = new Thread(() => Worker(subDir, ref table));
-                thread.Start();
+                new Thread(delegate ()
+                {
+                    //Spawnen des Workers
+                    Worker(subDir, ref table);
+                    // Wenn dies der letzte Thread ist, signal absetzen
+                    if (Interlocked.Decrement(ref toProcess) == 0)
+                    {
+                        resetEvent.Set();
+                    }
+                }).Start();
+                //Thread thread = new Thread(() => Worker(subDir, ref table));
+                //thread.Start();
             }
+            //Warten bis alle Threads fertig sind
+            resetEvent.WaitOne();
+            Console.WriteLine("Finished.");
             #endregion
 
             #region XML Zusammenbau
