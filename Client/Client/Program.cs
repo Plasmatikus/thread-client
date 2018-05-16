@@ -28,6 +28,34 @@ namespace Client
         //Testaufrufe von johannes
         static void TestJohannes()
         {
+            //Variablen für Ordner, etc
+            string saveFolder = "threadprogrammierung";
+            string saveFilename = "Dateisystem.xml";
+            int maxParallelThreads = 3;
+
+            //Ermitteln des Appdata-Pfades um darin später den Ordner anzulegen.
+            string appDataFolder = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
+            saveFolder = Path.Combine(appDataFolder, saveFolder);
+
+            //Abfrage für maximale Anzahl paralleler Threads
+            bool inputErr = true;
+            while (inputErr)
+            {
+                Console.WriteLine("Bitte die Anzahl paralleler Threads angeben(Ganzzahl):");
+                string inputMaxThreads;
+                inputMaxThreads = Console.ReadLine();
+                bool result;
+                result = int.TryParse(inputMaxThreads, out maxParallelThreads);
+                if (result)
+                {
+                    inputErr = false;
+                }
+                else
+                {
+                    Console.WriteLine("Fehlerhafte Eingabe!");
+                }
+            }
+
             //Abfrage des Verzeichnispfades
             Console.WriteLine("Bitte Pfad des zu durchsuchenden Verzeichnisses angeben.");
             string dirInput = Console.ReadLine();
@@ -35,14 +63,17 @@ namespace Client
             //Konvertieren des Inputs zu einem Verzeichnispfad
             var rootDir = new DirectoryInfo(dirInput);
 
-            //Erstellen des XMLs mit eigener Methode
-            var xmlDoc = new XDocument(Johannes.GetDirectoryXML(rootDir));
+            //Starten des Thread-Controllers
+            Johannes.Controller(rootDir, maxParallelThreads, saveFolder, saveFilename);
+
+
+            //var xmlDoc = new XDocument(Johannes.GetDirectoryXML(rootDir));
 
             //Speichern des XMLs, Pfad: thread-client\Client\Client\bin\Debug\
             //xmlDoc.Save("test.xml");
 
             //Anzeigen des XMLs
-            Console.WriteLine(xmlDoc.ToString());
+            //Console.WriteLine(xmlDoc.ToString());
 
             //Warten auf Nutzeingabe zum beenden.
             Console.ReadLine();
