@@ -55,20 +55,87 @@ namespace Client
 
             // Erstellen der Spalte für den zum String konvertierten XML-Baum. Idee: String durch XElement ersetzen
             column = new DataColumn();
-            column.DataType = Type.GetType("System.String");
+            column.DataType = System.Type.GetType("System.String");
+            //column.DataType = Type.GetType("System.Data.DataTable");
             column.ColumnName = "Tree";
             table.Columns.Add(column);
             #endregion
 
+            #region Threadstarter
             //Auslesen der Root-Verzeichnisses und ausführen der entsprechenden Worker
             foreach (var subDir in _rootDir.GetDirectories())
             {
-                //ParameterizedThreadStart pts = new ParameterizedThreadStart(Worker);
-                //Thread thread = new Thread(pts);
-                //thread.Start(subDir, ref table);
+                Thread thread = new Thread(() => Worker(subDir, ref table));
+                thread.Start();
             }
+            #endregion
 
-            //Temporär! Schreiben des Ergebnisses in eine Datei und Ende.
+            #region XML Zusammenbau
+
+            //Anlegen von weitern nötigen XElements (Client-Name etc)
+            string clientName = System.Environment.MachineName;
+            //Erzeugen des "Root" XML-Elements
+            var rootXML = new XElement("client", new XAttribute("name", clientName));
+            //Zusammenfügen der XML-Teilbäume aus dem DataTable
+            for(int i=0; i< table.Rows.Count; i++)
+            {
+                string temp = table.Rows[1][i].ToString();
+                rootXML.Add(XElement.Parse(temp));
+            }
+            //Auslesen der Dateien des RootDir und einfügen ins XML
+            #region Dateibehandlung
+            //Schreiben der Dateien des Verzeichnisses ins XML
+            foreach (var file in _rootDir.GetFiles())
+            {
+                //Konvertieren der Dateigröße von Byte in passende Einheit
+                string filesize = "";
+                long filelenght = file.Length;
+                //kleiner Hack um Datentypbeschränkung in If-Bedingungen zu umgehen
+                //Nachträglich konsequenterweise für alle Größen nachgetragen
+                int B = 1024;
+                int kB = 1024 * 1024;
+                int MB = 1024 * 1024 * 1024;
+                long GB = MB * 1024;
+                //Entscheidungsbaum uns Stringformatierung
+                if (filelenght / B == 0)
+                {
+                    filesize = filelenght + "B";
+                }
+                else if (filelenght / kB == 0)
+                {
+                    filelenght = filelenght / B;
+                    filesize = filelenght + "kB";
+                }
+                else if (filelenght / MB == 0)
+                {
+                    filelenght = filelenght / kB;
+                    filesize = filelenght + "MB";
+                }
+                else if (filelenght / GB == 0)
+                {
+                    filelenght = filelenght / MB;
+                    filesize = filelenght + "GB";
+                }
+                else
+                {
+                    filelenght = filelenght / GB;
+                    filesize = filelenght + "TB";
+                }
+
+                rootXML.Add(new XElement("datei", new XAttribute("name", file.Name), new XAttribute("groesse", filesize)));
+            }
+            #endregion
+            //Einbetten des Zusammengefügtrn XMLs in ein XDocument
+            var xmlDoc = new XDocument(rootXML);
+            //Zusammenbau des Speicherord-Pfades und abspeichern
+            string saveDest = Path.Combine(_saveDir,_saveFile);
+            if (!Directory.Exists(_saveDir))
+            {
+                Directory.CreateDirectory(_saveDir);
+            }
+            xmlDoc.Save(saveDest);
+            Console.WriteLine("Dokument gespeichert");
+            #endregion
         }
         //Worker Thread
         public void Worker(DirectoryInfo workDir, ref DataTable resultTable)
@@ -91,6 +158,7 @@ namespace Client
                 row = resultTable.NewRow();
                 row["Folder"] = workDir;
                 row["Tree"] = xmlTreeString;
+                //row["Tree"] = tree;
                 resultTable.Rows.Add(row);
             }
 
@@ -98,6 +166,7 @@ namespace Client
             {
                 // Freigeben des Workslots
                 S.Release();
+                Console.WriteLine("Thread " + workDir + " ist fertig");
             }
         }
 

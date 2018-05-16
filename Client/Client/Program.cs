@@ -64,7 +64,8 @@ namespace Client
             var rootDir = new DirectoryInfo(dirInput);
 
             //Starten des Thread-Controllers
-            Johannes.Controller(rootDir, maxParallelThreads, saveFolder, saveFilename);
+            Johannes johannes = new Johannes(rootDir, maxParallelThreads, saveFolder, saveFilename);
+            johannes.Controller();
 
 
             //var xmlDoc = new XDocument(Johannes.GetDirectoryXML(rootDir));
@@ -76,6 +77,7 @@ namespace Client
             //Console.WriteLine(xmlDoc.ToString());
 
             //Warten auf Nutzeingabe zum beenden.
+            Console.WriteLine("Fertig!");
             Console.ReadLine();
         }
     }
