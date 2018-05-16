@@ -89,7 +89,7 @@ namespace Client
             }
             //Warten bis alle Threads fertig sind
             resetEvent.WaitOne();
-            Console.WriteLine("Finished.");
+            Console.WriteLine("Alle Threads fertig.");
             #endregion
 
             #region XML Zusammenbau
@@ -101,7 +101,7 @@ namespace Client
             //Zusammenfügen der XML-Teilbäume aus dem DataTable
             for(int i=0; i< table.Rows.Count; i++)
             {
-                string temp = table.Rows[1][i].ToString();
+                string temp = table.Rows[i][1].ToString();
                 rootXML.Add(XElement.Parse(temp));
             }
             //Auslesen der Dateien des RootDir und einfügen ins XML

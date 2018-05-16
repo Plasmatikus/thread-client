@@ -29,6 +29,7 @@ namespace Client
         static void TestJohannes()
         {
             //Variablen für Ordner, etc
+            //Notiz: Ordnerpfad lautet C:\Users\[Nutzername]\AppData\Roaming\threadprogrammierung
             string saveFolder = "threadprogrammierung";
             string saveFilename = "Dateisystem.xml";
             int maxParallelThreads = 3;
