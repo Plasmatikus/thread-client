@@ -65,7 +65,7 @@ namespace Client
             var rootDir = new DirectoryInfo(dirInput);
 
             //Starten des Thread-Controllers
-            Johannes johannes = new Johannes(rootDir, maxParallelThreads, saveFolder, saveFilename);
+            Johannes johannes = new Johannes(rootDir, maxParallelThreads);
             johannes.Controller();
 
 
