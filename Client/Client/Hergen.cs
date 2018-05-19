@@ -18,15 +18,17 @@ namespace Client
     class Hergen
     {
         #region fields
-        DataTable _table;
-        Daniel _daniel;
+        private DataTable _table;
+        private Daniel _daniel;
+        private System.Threading.Semaphore S;
         #endregion
 
         #region ctor
-        public Hergen(DataTable table, Daniel daniel)
+        public Hergen(DataTable table, Daniel daniel, int maxParallelThreads)
         {
             _table = table;
             _daniel = daniel;
+            S = new System.Threading.Semaphore(maxParallelThreads, maxParallelThreads);
         }
         #endregion
 
