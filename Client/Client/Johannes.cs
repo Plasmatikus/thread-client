@@ -22,16 +22,12 @@ namespace Client
         //Semaphor zur steuerung der Anzahl paralleler Threads
         public System.Threading.Semaphore S;
         private DirectoryInfo _rootDir;
-        private string _saveDir;
-        private string _saveFile;
         #endregion
 
         #region ctor
-        public Johannes(DirectoryInfo rootDir, int parallelThreads, string saveDir, string saveFile)
+        public Johannes(DirectoryInfo rootDir, int parallelThreads)
         {
             _rootDir = rootDir;
-            _saveDir = saveDir;
-            _saveFile = saveFile;
             S = new System.Threading.Semaphore(parallelThreads, parallelThreads);
         }
         #endregion
