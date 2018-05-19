@@ -39,7 +39,7 @@ namespace Client
 
         #region Methoden
         //Controller für das Multithreading
-        public void Controller()
+        public DataTable Controller()
         {
 
             #region Vorbereiten des Table   
@@ -100,20 +100,28 @@ namespace Client
             Console.WriteLine("Alle Threads fertig.");
             #endregion
 
-            #region XML Zusammenbau
+            #region XML Nachbearbeitung
 
             //Anlegen von weitern nötigen XElements (Client-Name etc)
             string clientName = System.Environment.MachineName;
-            //Erzeugen des "Root" XML-Elements
-            var rootXML = new XElement("client", new XAttribute("name", clientName));
-            //Zusammenfügen der XML-Teilbäume aus dem DataTable
+            
+            //Anfügen des Client Tags an die XML-Teilbäume
             for(int i=0; i< table.Rows.Count; i++)
             {
+                var postprocessedXML = new XElement("client", new XAttribute("name", clientName));
                 string temp = table.Rows[i][1].ToString();
-                rootXML.Add(XElement.Parse(temp));
+                postprocessedXML.Add(XElement.Parse(temp));
+                table.Rows[i][1] = postprocessedXML.ToString();
             }
-            //Auslesen der Dateien des RootDir und einfügen ins XML
-            #region Dateibehandlung
+            #endregion
+
+            #region Root-Dateibehandlung
+            //Auslesen der Dateien des RootDir und einfügen ins "Root" XML
+
+
+            //Erzeugen des "Root" XML-Elements
+            var rootXML = new XElement("client", new XAttribute("name", clientName));
+
             //Schreiben der Dateien des Verzeichnisses ins XML
             foreach (var file in _rootDir.GetFiles())
             {
@@ -158,18 +166,34 @@ namespace Client
 
                 rootXML.Add(new XElement("datei", new XAttribute("name", file.Name), new XAttribute("groesse", filesize)));
             }
+
+            //Anlegen einer neuen Row im DataTable
+            DataRow row;
+            string xmlTreeString;
+            xmlTreeString = rootXML.ToString();
+            row = table.NewRow();
+            row["Folder"] = "RootDir";
+            row["Tree"] = xmlTreeString;
+            table.Rows.Add(row);
+
             #endregion
+
+            //Rückgabe des Data-Tables mit den Teil-XMLs
+            return table;
+
             //Einbetten des Zusammengefügtrn XMLs in ein XDocument
-            var xmlDoc = new XDocument(rootXML);
+            //var xmlDoc = new XDocument(rootXML);
             //Zusammenbau des Speicherord-Pfades und abspeichern
-            string saveDest = Path.Combine(_saveDir,_saveFile);
-            if (!Directory.Exists(_saveDir))
-            {
-                Directory.CreateDirectory(_saveDir);
-            }
-            xmlDoc.Save(saveDest);
-            Console.WriteLine("Dokument gespeichert");
-            #endregion
+            //string saveDest = Path.Combine(_saveDir,_saveFile);
+            //if (!Directory.Exists(_saveDir))
+            //{
+            //    Directory.CreateDirectory(_saveDir);
+            //}
+            //xmlDoc.Save(saveDest);
+            //Console.WriteLine("Dokument gespeichert");
+
+
+
         }
         //Worker Thread
         public void Worker(DirectoryInfo workDir, ref DataTable resultTable)
@@ -192,7 +216,6 @@ namespace Client
                 row = resultTable.NewRow();
                 row["Folder"] = workDir;
                 row["Tree"] = xmlTreeString;
-                //row["Tree"] = tree;
                 resultTable.Rows.Add(row);
             }
 
