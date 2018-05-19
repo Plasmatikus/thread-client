@@ -22,7 +22,6 @@ namespace Client
         //Semaphor zur steuerung der Anzahl paralleler Threads
         public System.Threading.Semaphore S;
         private DirectoryInfo _rootDir;
-        //private int _parallelThreads;
         private string _saveDir;
         private string _saveFile;
         #endregion
@@ -41,29 +40,13 @@ namespace Client
         //Controller für das Multithreading
         public DataTable Controller()
         {
-
-            #region Vorbereiten des Table   
+  
             //Erstellen einer Datatable um darin für jeden Ordner die Verzeichnisstruktur abzulegen
             DataTable table = new DataTable();
 
-            // Deklarieren der Zeilen und Spalten Variablen
-            DataColumn column;
-
-            // Erstellen der Spalte für den Ordnernamen    
-            column = new DataColumn();
-            column.DataType = System.Type.GetType("System.String");
-            column.ColumnName = "Folder";
-            table.Columns.Add(column);
-
-            // Erstellen der Spalte für den zum String konvertierten XML-Baum. Idee: String durch XElement ersetzen
-            column = new DataColumn();
-            column.DataType = System.Type.GetType("System.String");
-            //column.DataType = Type.GetType("System.Data.DataTable");
-            column.ColumnName = "Tree";
-            table.Columns.Add(column);
-            #endregion
-
-            #region Threadhandling
+            //Formatieren der DataTable
+            table = FormatDataTable(table);
+            
             //Ermitteln der Anzahl an Ordnern im Root Verzeichnis (Aus management Gründen)
             int folderCount = 0;
             foreach (var subDir in _rootDir.GetDirectories())
@@ -73,9 +56,10 @@ namespace Client
                     folderCount++;
                 }
             }
-            //
+            //Anlegen des Reset-Events für das warten auf die Threads
             ManualResetEvent resetEvent = new ManualResetEvent(false);
             int toProcess = folderCount;
+
             //Auslesen der Root-Verzeichnisses und ausführen der entsprechenden Worker
             foreach (var subDir in _rootDir.GetDirectories())
             {
@@ -91,16 +75,11 @@ namespace Client
                             resetEvent.Set();
                         }
                     }).Start();
-                    //Thread thread = new Thread(() => Worker(subDir, ref table));
-                    //thread.Start();
                 }
             }
             //Warten bis alle Threads fertig sind
             resetEvent.WaitOne();
             Console.WriteLine("Alle Threads fertig.");
-            #endregion
-
-            #region XML Nachbearbeitung
 
             //Anlegen von weitern nötigen XElements (Client-Name etc)
             string clientName = System.Environment.MachineName;
@@ -113,11 +92,8 @@ namespace Client
                 postprocessedXML.Add(XElement.Parse(temp));
                 table.Rows[i][1] = postprocessedXML.ToString();
             }
-            #endregion
 
-            #region Root-Dateibehandlung
             //Auslesen der Dateien des RootDir und einfügen ins "Root" XML
-
 
             //Erzeugen des "Root" XML-Elements
             var rootXML = new XElement("client", new XAttribute("name", clientName));
@@ -125,45 +101,14 @@ namespace Client
             //Schreiben der Dateien des Verzeichnisses ins XML
             foreach (var file in _rootDir.GetFiles())
             {
-                //Konvertieren der Dateigröße von Byte in passende Einheit
-                string filesize = "";
-                long filelenght = file.Length;
-                //kleiner Hack um Datentypbeschränkung in If-Bedingungen zu umgehen
-                //Nachträglich konsequenterweise für alle Größen nachgetragen
-                int B = 1024;
-                int kB = 1024 * 1024;
-                int MB = 1024 * 1024 * 1024;
-                long GB = (long)MB * 1024;
-                //Entscheidungsbaum uns Stringformatierung
-                if (filelenght == 0)
-                {
-                    filesize = "0B";
-                }
-                else if (filelenght / B == 0)
-                {
-                    filesize = filelenght + "B";
-                }
-                else if (filelenght / kB == 0)
-                {
-                    filelenght = filelenght / B;
-                    filesize = filelenght + "kB";
-                }
-                else if (filelenght / MB == 0)
-                {
-                    filelenght = filelenght / kB;
-                    filesize = filelenght + "MB";
-                }
-                else if (filelenght / GB == 0)
-                {
-                    filelenght = filelenght / MB;
-                    filesize = filelenght + "GB";
-                }
-                else
-                {
-                    filelenght = filelenght / GB;
-                    filesize = filelenght + "TB";
-                }
+                //Output
+                string filesize="";
 
+                //Konvertieren der Dateigröße von Byte in passende Einheit
+                long filelenght = file.Length;
+                filesize = CalcFileSize(filelenght);
+
+                //Eintragen in's XML
                 rootXML.Add(new XElement("datei", new XAttribute("name", file.Name), new XAttribute("groesse", filesize)));
             }
 
@@ -176,34 +121,19 @@ namespace Client
             row["Tree"] = xmlTreeString;
             table.Rows.Add(row);
 
-            #endregion
-
             //Rückgabe des Data-Tables mit den Teil-XMLs
             return table;
-
-            //Einbetten des Zusammengefügtrn XMLs in ein XDocument
-            //var xmlDoc = new XDocument(rootXML);
-            //Zusammenbau des Speicherord-Pfades und abspeichern
-            //string saveDest = Path.Combine(_saveDir,_saveFile);
-            //if (!Directory.Exists(_saveDir))
-            //{
-            //    Directory.CreateDirectory(_saveDir);
-            //}
-            //xmlDoc.Save(saveDest);
-            //Console.WriteLine("Dokument gespeichert");
-
-
-
         }
-        //Worker Thread
-        public void Worker(DirectoryInfo workDir, ref DataTable resultTable)
+
+        //Worker Methode
+        private void Worker(DirectoryInfo workDir, ref DataTable resultTable)
         {
             try
             {
                 //Warten bis ein Workslot freigegeben wird
                 S.WaitOne();
-                // Hier kommt der Payload hin
 
+                //Let's do this ... LEEEEROY
                 //Variablen
                 string xmlTreeString = "";
                 DataRow row;
@@ -226,9 +156,72 @@ namespace Client
                 Console.WriteLine("Thread " + workDir + " ist fertig");
             }
         }
+        //DataTable Formatierer
+        private DataTable FormatDataTable(DataTable table)
+        {
+            // Deklarieren der Spalten Variable
+            DataColumn column;
 
+            // Erstellen der Spalte für den Ordnernamen    
+            column = new DataColumn();
+            column.DataType = System.Type.GetType("System.String");
+            column.ColumnName = "Folder";
+            table.Columns.Add(column);
+
+            // Erstellen der Spalte für den zum String konvertierten XML-Baum.
+            column = new DataColumn();
+            column.DataType = System.Type.GetType("System.String");
+            column.ColumnName = "Tree";
+            table.Columns.Add(column);
+
+            //Rückgabe der formatierten Tabelle
+            return table;
+        }
+        //Dateigrößen Berechner
+        private string CalcFileSize(long filelenght)
+        {
+            //Variable
+            string filesize = "";
+            //kleiner Hack um Datentypbeschränkung in If-Bedingungen zu umgehen
+            //Nachträglich konsequenterweise für alle Größen nachgetragen
+            int B = 1024;
+            int kB = 1024 * 1024;
+            int MB = 1024 * 1024 * 1024;
+            long GB = (long)MB * 1024;
+            //Entscheidungsbaum uns Stringformatierung
+            if (filelenght == 0)
+            {
+                filesize = "0B";
+            }
+            else if (filelenght / B == 0)
+            {
+                filesize = filelenght + "B";
+            }
+            else if (filelenght / kB == 0)
+            {
+                filelenght = filelenght / B;
+                filesize = filelenght + "kB";
+            }
+            else if (filelenght / MB == 0)
+            {
+                filelenght = filelenght / kB;
+                filesize = filelenght + "MB";
+            }
+            else if (filelenght / GB == 0)
+            {
+                filelenght = filelenght / MB;
+                filesize = filelenght + "GB";
+            }
+            else
+            {
+                filelenght = filelenght / GB;
+                filesize = filelenght + "TB";
+            }
+
+            return filesize;
+        }
         //Rekursiver Ordner/Dateileser nach XML
-        public XElement GetDirectoryXML(DirectoryInfo dir)
+        private XElement GetDirectoryXML(DirectoryInfo dir)
         {
             //Einfügen des aktuellen Verzeichnisses in die Struktur
             var DirXML = new XElement("verzeichnis", new XAttribute("name", dir.Name));
@@ -240,37 +233,7 @@ namespace Client
                     //Konvertieren der Dateigröße von Byte in passende Einheit
                     string filesize = "";
                     long filelenght = file.Length;
-                    //kleiner Hack um Datentypbeschränkung in If-Bedingungen zu umgehen
-                    //Nachträglich konsequenterweise für alle Größen nachgetragen
-                    int B = 1024;
-                    int kB = 1024 * 1024;
-                    int MB = 1024 * 1024 * 1024;
-                    long GB = (long)MB * 1024;
-                    //Entscheidungsbaum uns Stringformatierung
-                    if (filelenght / B == 0)
-                    {
-                        filesize = filelenght + "B";
-                    }
-                    else if (filelenght / kB == 0)
-                    {
-                        filelenght = filelenght / B;
-                        filesize = filelenght + "kB";
-                    }
-                    else if (filelenght / MB == 0)
-                    {
-                        filelenght = filelenght / kB;
-                        filesize = filelenght + "MB";
-                    }
-                    else if (filelenght / GB == 0)
-                    {
-                        filelenght = filelenght / MB;
-                        filesize = filelenght + "GB";
-                    }
-                    else
-                    {
-                        filelenght = filelenght / GB;
-                        filesize = filelenght + "TB";
-                    }
+                    filesize = CalcFileSize(filelenght);
 
                     DirXML.Add(new XElement("datei", new XAttribute("name", file.Name), new XAttribute("groesse", filesize)));
                 }
