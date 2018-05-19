@@ -68,7 +68,10 @@ namespace Client
             int folderCount = 0;
             foreach (var subDir in _rootDir.GetDirectories())
             {
-                folderCount++;
+                if (!(subDir.ToString() == "home"))
+                {
+                    folderCount++;
+                }
             }
             //
             ManualResetEvent resetEvent = new ManualResetEvent(false);
@@ -76,18 +79,21 @@ namespace Client
             //Auslesen der Root-Verzeichnisses und ausführen der entsprechenden Worker
             foreach (var subDir in _rootDir.GetDirectories())
             {
-                new Thread(delegate ()
+                if (!(subDir.ToString() == "home"))
                 {
+                    new Thread(delegate ()
+                    {
                     //Spawnen des Workers
                     Worker(subDir, ref table);
                     // Wenn dies der letzte Thread ist, signal absetzen
                     if (Interlocked.Decrement(ref toProcess) == 0)
-                    {
-                        resetEvent.Set();
-                    }
-                }).Start();
-                //Thread thread = new Thread(() => Worker(subDir, ref table));
-                //thread.Start();
+                        {
+                            resetEvent.Set();
+                        }
+                    }).Start();
+                    //Thread thread = new Thread(() => Worker(subDir, ref table));
+                    //thread.Start();
+                }
             }
             //Warten bis alle Threads fertig sind
             resetEvent.WaitOne();
