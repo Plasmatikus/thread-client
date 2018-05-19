@@ -68,7 +68,7 @@ namespace Client
             int folderCount = 0;
             foreach (var subDir in _rootDir.GetDirectories())
             {
-                if (!(subDir.ToString() == "home"))
+                if (!(subDir.ToString() == "home") || !(subDir.ToString() == "users"))
                 {
                     folderCount++;
                 }
@@ -79,7 +79,7 @@ namespace Client
             //Auslesen der Root-Verzeichnisses und ausführen der entsprechenden Worker
             foreach (var subDir in _rootDir.GetDirectories())
             {
-                if (!(subDir.ToString() == "home"))
+                if (!(subDir.ToString() == "home") || !(subDir.ToString() == "users"))
                 {
                     new Thread(delegate ()
                     {
