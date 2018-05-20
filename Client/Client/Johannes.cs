@@ -10,7 +10,7 @@ using System.Xml.Linq;
 /* Author: Johannes Schuhn
  * Matr.Nr.: 70445161
  * Fach: Threadprogrammierung(?)
- * Aufgabe:
+ * Aufgabe: Dateisystem auslesen und XML generieren
  * 
  * Anmerkung(en):
  */
@@ -86,7 +86,9 @@ namespace Client
                 var postprocessedXML = new XElement("client", new XAttribute("name", clientName));
                 string temp = table.Rows[i][1].ToString();
                 postprocessedXML.Add(XElement.Parse(temp));
-                table.Rows[i][1] = postprocessedXML.ToString();
+                XDocument XMLDoc = new XDocument(new XDeclaration("1.0", "utf-8", "yes"),
+                                                postprocessedXML);
+                table.Rows[i][1] = XDocumentToString(XMLDoc);
             }
 
             //Auslesen der Dateien des RootDir und einfügen ins "Root" XML
@@ -111,14 +113,28 @@ namespace Client
             //Anlegen einer neuen Row im DataTable
             DataRow row;
             string xmlTreeString;
-            xmlTreeString = rootXML.ToString();
+            XDocument RootDoc = new XDocument(new XDeclaration("1.0", "utf-8", "yes"),
+                                              rootXML);
+            xmlTreeString = XDocumentToString(RootDoc);
             row = table.NewRow();
             row["Folder"] = "RootDir";
             row["Tree"] = xmlTreeString;
             table.Rows.Add(row);
 
+            //Debugging: Schreiben jedes XML-Documents auf die Festplatte zur manuellen Analyse
+            /*for (int i = 0; i < table.Rows.Count; i++)
+            {
+                string tempXML = table.Rows[i][1].ToString();
+                string tempDir = table.Rows[i][0].ToString();
+                XDocument test = new XDocument(XDocument.Parse(tempXML));
+                string savename = "\\XML\\"+ tempDir + ".xml";
+                test.Save(savename);
+            }
+            */
+
             //Rückgabe des Data-Tables mit den Teil-XMLs
             return table;
+
         }
 
         //Worker Methode
@@ -215,6 +231,23 @@ namespace Client
             }
 
             return filesize;
+        }
+        //Konverter für XDocuments zu String, der die Deklaration am Anfang erhält
+        private string XDocumentToString(XDocument doc)
+        {
+            //Abfangen des Falls, dass ein leeres XDocument übergeben wird
+            //Lieber meine Exception als ein Programmabsturz ;)
+            if (doc == null)
+            {
+                throw new ArgumentNullException("doc");
+            }
+            //Erstellen eines neuen Stringbuilders
+            StringBuilder builder = new StringBuilder();
+            using (TextWriter writer = new StringWriter(builder))
+            {
+                doc.Save(writer);
+            }
+            return builder.ToString();
         }
         //Rekursiver Ordner/Dateileser nach XML
         private XElement GetDirectoryXML(DirectoryInfo dir)
