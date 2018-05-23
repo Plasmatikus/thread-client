@@ -47,7 +47,7 @@ namespace Client
             int folderCount = 0;
             foreach (var subDir in _rootDir.GetDirectories())
             {
-                if (!(subDir.ToString() == "home") || !(subDir.ToString() == "users"))
+                if (!(subDir.ToString() == "home") || !(subDir.ToString() == "Users"))
                 {
                     folderCount++;
                 }
@@ -59,7 +59,7 @@ namespace Client
             //Auslesen der Root-Verzeichnisses und ausführen der entsprechenden Worker
             foreach (var subDir in _rootDir.GetDirectories())
             {
-                if (!(subDir.ToString() == "home") || !(subDir.ToString() == "users"))
+                if (!(subDir.ToString() == "home") || !(subDir.ToString() == "Users"))
                 {
                     new Thread(delegate ()
                     {
@@ -73,6 +73,7 @@ namespace Client
                     }).Start();
                 }
             }
+
             //Warten bis alle Threads fertig sind
             resetEvent.WaitOne();
             Console.WriteLine("Alle Threads fertig.");
@@ -122,6 +123,7 @@ namespace Client
             table.Rows.Add(row);
 
             //Debugging: Schreiben jedes XML-Documents auf die Festplatte zur manuellen Analyse
+            //Fehler für leere Strings liegt anscheinend schn früher vor, debugging vor das schreiben in den DataTable verschoben
             /*for (int i = 0; i < table.Rows.Count; i++)
             {
                 string tempXML = table.Rows[i][1].ToString();
@@ -152,6 +154,12 @@ namespace Client
                 XElement tree;
                 //Ausführen der XML-GeneratorMethode
                 tree = GetDirectoryXML(workDir);
+
+                //Debug: Speichern des XDocuments vor dem Umwandlen zum string.
+                //Test warum gewisse XDocuments leer bleiben. Ergebnis: Alle XDocuments sind befüllt ...
+                //string savename = "\\XML\\" + workDir + ".xml";
+                //tree.Save(savename);
+
                 //Umwandeln des Ergebnisses zu einem String
                 xmlTreeString = tree.ToString();
                 //Speichern des Ergebnisses im referenzierten DataTable
