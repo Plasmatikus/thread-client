@@ -33,24 +33,29 @@ namespace Client
         #endregion
 
         #region Methoden
-        //Controller für das Multithreading
-        public DataTable Controller()
+        //Controller für die Operationen
+        public void Controller()
         {
-  
-            //Erstellen einer Datatable um darin für jeden Ordner die Verzeichnisstruktur abzulegen
-            DataTable table = new DataTable();
+            //Anlegen des XML Verzechnisses, gegebenenfalls vorweg löschen von alten Dateien
+            System.IO.Directory.CreateDirectory("C:\\XML\\");
+
+            System.IO.DirectoryInfo di = new DirectoryInfo("C:\\XML\\");
+
+            foreach (FileInfo file in di.GetFiles())
+            {
+                file.Delete();
+            }
+            
 
             //Auslesen des Client Namens
             string clientName = System.Environment.MachineName;
-
-            //Formatieren der DataTable
-            table = FormatDataTable(table);
             
             //Ermitteln der Anzahl an Ordnern im Root Verzeichnis (Aus management Gründen)
+            //User/Home Verzeichnisse werden wegen Privatsphäre, und das XML Verzeichnis Programmstabilität, ausgeschlossen
             int folderCount = 0;
             foreach (var subDir in _rootDir.GetDirectories())
             {
-                if (!(subDir.ToString() == "home") || !(subDir.ToString() == "Users"))
+                if (!(subDir.ToString() == "home") || !(subDir.ToString() == "Users") || !(subDir.ToString() == "XML"))
                 {
                     folderCount++;
                 }
@@ -60,14 +65,15 @@ namespace Client
             int toProcess = folderCount;
 
             //Auslesen der Root-Verzeichnisses und ausführen der entsprechenden Worker
+            //User /Home Verzeichnisse und das XML Verzeichnis werden wegen Privatsphäre und Programmstabilität ausgeschlossen
             foreach (var subDir in _rootDir.GetDirectories())
             {
-                if (!(subDir.ToString() == "home") || !(subDir.ToString() == "Users"))
+                if (!(subDir.ToString() == "home") || !(subDir.ToString() == "Users") || !(subDir.ToString() == "XML"))
                 {
                     new Thread(delegate ()
                     {
                     //Spawnen des Workers
-                    Worker(subDir, clientName, ref table);
+                    Worker(subDir, clientName);
                     // Wenn dies der letzte Thread ist, signal absetzen
                     if (Interlocked.Decrement(ref toProcess) == 0)
                         {
@@ -101,36 +107,13 @@ namespace Client
                 rootXML.Add(new XElement("datei", new XAttribute("name", file.Name), new XAttribute("groesse", filesize)));
             }
 
-            //Anlegen einer neuen Row im DataTable
-            DataRow row;
-            string xmlTreeString;
-            XDocument RootDoc = new XDocument(new XDeclaration("1.0", "utf-8", "yes"),
-                                              rootXML);
-            xmlTreeString = XDocumentToString(RootDoc);
-            row = table.NewRow();
-            row["Folder"] = "RootDir";
-            row["Tree"] = xmlTreeString;
-            table.Rows.Add(row);
-
-            //Debugging: Schreiben jedes XML-Documents auf die Festplatte zur manuellen Analyse
-            //Fehler für leere Strings liegt anscheinend schn früher vor, debugging vor das schreiben in den DataTable verschoben
-            /*for (int i = 0; i < table.Rows.Count; i++)
-            {
-                string tempXML = table.Rows[i][1].ToString();
-                string tempDir = table.Rows[i][0].ToString();
-                XDocument test = new XDocument(XDocument.Parse(tempXML));
-                string savename = "\\XML\\"+ tempDir + ".xml";
-                test.Save(savename);
-            }
-            */
-
-            //Rückgabe des Data-Tables mit den Teil-XMLs
-            return table;
+            //Schreiben des XML in Datei
+            string savename = "\\XML\\" + "RootDir" + ".xml";
+            rootXML.Save(savename);
 
         }
-
         //Worker Methode
-        private void Worker(DirectoryInfo workDir, string client, ref DataTable resultTable)
+        private void Worker(DirectoryInfo workDir, string client)
         {
             try
             {
@@ -138,9 +121,7 @@ namespace Client
                 S.WaitOne();
 
                 //Let's do this ... LEEEEROY JENKINS !!!
-                //Variablen
-                string xmlTreeString = "";
-                DataRow row;
+                Console.WriteLine("Thread " + workDir + " hat gestartet");
 
                 //Anlegen des XML Baums mit dem client Root-Tag
                 XElement tree = new XElement("client", new XAttribute("name", client));
@@ -152,16 +133,7 @@ namespace Client
                 //Test warum gewisse XDocuments leer bleiben. Ergebnis: Alle XDocuments sind befüllt ...
                 string savename = "\\XML\\" + workDir + ".xml";
                 tree.Save(savename);
-
-                //Umwandeln des Ergebnisses zu einem String -- Aktuell Test mit Stringwriter als Bug-Workaround
-                //xmlTreeString = tree.ToString();
-                XDocument temp = new XDocument(tree);
-                xmlTreeString = XDocumentToString(temp);
-                //Speichern des Ergebnisses im referenzierten DataTable
-                row = resultTable.NewRow();
-                row["Folder"] = workDir;
-                row["Tree"] = xmlTreeString;
-                resultTable.Rows.Add(row);
+                
             }
 
             finally
@@ -171,7 +143,7 @@ namespace Client
                 Console.WriteLine("Thread " + workDir + " ist fertig");
             }
         }
-        //DataTable Formatierer
+        //DataTable Formatierer -- Inzwischen überflüssig
         private DataTable FormatDataTable(DataTable table)
         {
             // Deklarieren der Spalten Variable
@@ -235,7 +207,7 @@ namespace Client
 
             return filesize;
         }
-        //Konverter für XDocuments zu String, der die Deklaration am Anfang erhält
+        //Konverter für XDocuments zu String, der die Deklaration am Anfang erhält -- Inzwischen überflüssig
         private string XDocumentToString(XDocument doc)
         {
             //Abfangen des Falls, dass ein leeres XDocument übergeben wird

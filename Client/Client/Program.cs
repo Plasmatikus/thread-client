@@ -14,9 +14,9 @@ namespace Client
         static void Main(string[] args)
         {
             //Variablen
-            DataTable _datatable;
+            //DataTable _datatable;
             //Aufrufe
-            _datatable = TestJohannes();
+            TestJohannes();
             //TestDaniel();
             //TestHergen();
         }
@@ -34,40 +34,32 @@ namespace Client
             // Hergen hergen = new Hergen(_table, _daniel, maxParallelThreads)
         }
         //Testaufrufe von johannes
-        static DataTable TestJohannes()
+        static void TestJohannes()
         {
             //Variablen für Ordner, etc
-            DataTable table;
-            int maxParallelThreads = 3;
+            int maxParallelThreads;
+            string dirInput;
 
             //Abfrage für maximale Anzahl paralleler Threads
             maxParallelThreads = AbfrageAnzahlThreads("Mengenangabe für Threads beim Auslesen der Dateien (Default: 3)", 3);
             
             //Abfrage des Verzeichnispfades
             Console.WriteLine("Bitte Pfad des zu durchsuchenden Verzeichnisses angeben.");
-            string dirInput = Console.ReadLine();
+            dirInput = Console.ReadLine();
 
             //Konvertieren des Inputs zu einem Verzeichnispfad
             var rootDir = new DirectoryInfo(dirInput);
 
             //Starten des Thread-Controllers
             Johannes johannes = new Johannes(rootDir, maxParallelThreads);
-            table = johannes.Controller();
 
-
-            //var xmlDoc = new XDocument(Johannes.GetDirectoryXML(rootDir));
-
-            //Speichern des XMLs, Pfad: thread-client\Client\Client\bin\Debug\
-            //xmlDoc.Save("test.xml");
-
-            //Anzeigen des XMLs
-            //Console.WriteLine(xmlDoc.ToString());
+            //Ausgabe der XML-Dateien ist in C:\XML\
+            johannes.Controller();
 
             //Warten auf Nutzeingabe zum beenden.
             Console.WriteLine("Auslesen Fertig! - Warte auf Internet");
             Console.ReadLine();
-
-            return table;
+            
         }
 
         private static int AbfrageAnzahlThreads(string message, int maxParallelThreads)
