@@ -40,6 +40,9 @@ namespace Client
             //Erstellen einer Datatable um darin für jeden Ordner die Verzeichnisstruktur abzulegen
             DataTable table = new DataTable();
 
+            //Auslesen des Client Namens
+            string clientName = System.Environment.MachineName;
+
             //Formatieren der DataTable
             table = FormatDataTable(table);
             
@@ -64,7 +67,7 @@ namespace Client
                     new Thread(delegate ()
                     {
                     //Spawnen des Workers
-                    Worker(subDir, ref table);
+                    Worker(subDir, clientName, ref table);
                     // Wenn dies der letzte Thread ist, signal absetzen
                     if (Interlocked.Decrement(ref toProcess) == 0)
                         {
@@ -78,19 +81,6 @@ namespace Client
             resetEvent.WaitOne();
             Console.WriteLine("Alle Threads fertig.");
 
-            //Anlegen von weitern nötigen XElements (Client-Name etc)
-            string clientName = System.Environment.MachineName;
-            
-            //Anfügen des Client Tags an die XML-Teilbäume
-            for(int i=0; i< table.Rows.Count; i++)
-            {
-                var postprocessedXML = new XElement("client", new XAttribute("name", clientName));
-                string temp = table.Rows[i][1].ToString();
-                postprocessedXML.Add(XElement.Parse(temp));
-                XDocument XMLDoc = new XDocument(new XDeclaration("1.0", "utf-8", "yes"),
-                                                postprocessedXML);
-                table.Rows[i][1] = XDocumentToString(XMLDoc);
-            }
 
             //Auslesen der Dateien des RootDir und einfügen ins "Root" XML
 
@@ -140,28 +130,33 @@ namespace Client
         }
 
         //Worker Methode
-        private void Worker(DirectoryInfo workDir, ref DataTable resultTable)
+        private void Worker(DirectoryInfo workDir, string client, ref DataTable resultTable)
         {
             try
             {
                 //Warten bis ein Workslot freigegeben wird
                 S.WaitOne();
 
-                //Let's do this ... LEEEEROY
+                //Let's do this ... LEEEEROY JENKINS !!!
                 //Variablen
                 string xmlTreeString = "";
                 DataRow row;
-                XElement tree;
+
+                //Anlegen des XML Baums mit dem client Root-Tag
+                XElement tree = new XElement("client", new XAttribute("name", client));
+
                 //Ausführen der XML-GeneratorMethode
-                tree = GetDirectoryXML(workDir);
+                tree.Add(GetDirectoryXML(workDir));
 
                 //Debug: Speichern des XDocuments vor dem Umwandlen zum string.
                 //Test warum gewisse XDocuments leer bleiben. Ergebnis: Alle XDocuments sind befüllt ...
-                //string savename = "\\XML\\" + workDir + ".xml";
-                //tree.Save(savename);
+                string savename = "\\XML\\" + workDir + ".xml";
+                tree.Save(savename);
 
-                //Umwandeln des Ergebnisses zu einem String
-                xmlTreeString = tree.ToString();
+                //Umwandeln des Ergebnisses zu einem String -- Aktuell Test mit Stringwriter als Bug-Workaround
+                //xmlTreeString = tree.ToString();
+                XDocument temp = new XDocument(tree);
+                xmlTreeString = XDocumentToString(temp);
                 //Speichern des Ergebnisses im referenzierten DataTable
                 row = resultTable.NewRow();
                 row["Folder"] = workDir;
