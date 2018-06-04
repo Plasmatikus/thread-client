@@ -16,13 +16,17 @@ namespace Client
             //Variablen
             //DataTable _datatable;
             //Aufrufe
-            TestJohannes();
-            //TestDaniel();
+            //TestJohannes();
+          
+            TestDaniel();
+            
             //TestHergen();
         }
         static void TestDaniel()
         {
 
+            Daniel.AsynchronousClient.StartClient();
+            
         }
         static void TestHergen()
         {
@@ -55,6 +59,7 @@ namespace Client
 
             //Ausgabe der XML-Dateien ist in C:\XML\
             johannes.Controller();
+            
 
             //Warten auf Nutzeingabe zum beenden.
             Console.WriteLine("Auslesen Fertig! - Warte auf Internet");
