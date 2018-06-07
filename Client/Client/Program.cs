@@ -24,8 +24,8 @@ namespace Client
         }
         static void TestDaniel()
         {
-
-            Daniel.AsynchronousClient.StartClient();
+            
+            Daniel.StartClient();
             
         }
         static void TestHergen()
