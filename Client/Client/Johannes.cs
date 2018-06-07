@@ -22,6 +22,7 @@ namespace Client
         //Semaphor zur steuerung der Anzahl paralleler Threads
         public System.Threading.Semaphore S;
         private DirectoryInfo _rootDir;
+        List<XDocument> _subxmls = new List<XDocument>();
         #endregion
 
         #region ctor
@@ -34,8 +35,11 @@ namespace Client
 
         #region Methoden
         //Controller für die Operationen
-        public void Controller()
+        public List<XDocument> Controller()
         {
+            //Säubern der Liste, just to be sure
+            _subxmls.Clear();
+
             //Anlegen des XML Verzechnisses, gegebenenfalls vorweg löschen von alten Dateien
             System.IO.Directory.CreateDirectory("C:\\XML\\");
 
@@ -73,7 +77,7 @@ namespace Client
                     new Thread(delegate ()
                     {
                     //Spawnen des Workers
-                    Worker(subDir, clientName);
+                    Worker(subDir, clientName, ref _subxmls);
                     // Wenn dies der letzte Thread ist, signal absetzen
                     if (Interlocked.Decrement(ref toProcess) == 0)
                         {
@@ -107,13 +111,21 @@ namespace Client
                 rootXML.Add(new XElement("datei", new XAttribute("name", file.Name), new XAttribute("groesse", filesize)));
             }
 
+            //Erstellen eines XDocuments aus dem XElement und einer XDeclaration
+            XDocument rootXMLdoc = new XDocument(
+                new XDeclaration("1.0", "utf-8", "yes"),
+                rootXML);
+            _subxmls.Add(rootXMLdoc);
+
             //Schreiben des XML in Datei
-            string savename = "\\XML\\" + "RootDir" + ".xml";
-            rootXML.Save(savename);
+            //string savename = "\\XML\\" + "RootDir" + ".xml";
+            //rootXML.Save(savename);
+
+            return _subxmls;
 
         }
         //Worker Methode
-        private void Worker(DirectoryInfo workDir, string client)
+        private void Worker(DirectoryInfo workDir, string client, ref List<XDocument> subxmls)
         {
             try
             {
@@ -126,13 +138,20 @@ namespace Client
                 //Anlegen des XML Baums mit dem client Root-Tag
                 XElement tree = new XElement("client", new XAttribute("name", client));
 
+                //Zusammenbau eines XDocuments aus XElement und XDeclaration
+                XDocument rootXMLdoc = new XDocument(
+                    new XDeclaration("1.0", "utf-8", "yes"),
+                    tree);
+                subxmls.Add(rootXMLdoc);
+
                 //Ausführen der XML-GeneratorMethode
                 tree.Add(GetDirectoryXML(workDir));
 
+
                 //Debug: Speichern des XDocuments vor dem Umwandlen zum string.
                 //Test warum gewisse XDocuments leer bleiben. Ergebnis: Alle XDocuments sind befüllt ...
-                string savename = "\\XML\\" + workDir + ".xml";
-                tree.Save(savename);
+                //string savename = "\\XML\\" + workDir + ".xml";
+                //tree.Save(savename);
                 
             }
 
