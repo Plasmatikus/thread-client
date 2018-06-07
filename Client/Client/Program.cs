@@ -16,16 +16,16 @@ namespace Client
             //Variablen
             //DataTable _datatable;
             //Aufrufe
-            TestJohannes();
+            //TestJohannes();
           
-            //TestDaniel();
+            TestDaniel();
             
             //TestHergen();
         }
         static void TestDaniel()
         {
 
-            Daniel.AsynchronousClient.StartClient();
+            Daniel.StartClient();
             
         }
         static void TestHergen()
