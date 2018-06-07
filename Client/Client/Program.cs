@@ -17,6 +17,7 @@ namespace Client
         int _sendThreadCount;
         DirectoryInfo _rootDirectory;
         // Datentyp für Zyklenabfrage
+        List<XDocument> _list;
         static void Main(string[] args)
         {
             Program Test = new Program();
@@ -25,51 +26,33 @@ namespace Client
         void Run()
         {
             AbfrageGesamt();
-            TestJohannes();
-            TestDaniel();
-            TestHergen();
+
+            //TestJohannes();
+            //TestDaniel();
+            //TestHergen();
         }
         void TestDaniel()
         {
 
-            Daniel.AsynchronousClient.StartClient();
+            Daniel.StartClient();
             
         }
         void TestHergen()
         {
-
-            //Abfrage für maximale Anzahl paralleler Threads
-            _sendThreadCount = AbfrageAnzahlThreads("Mengenangabe für Threads beim Übertragen der Daten (Default: 2)", 2);
-
-            // Hergen hergen = new Hergen(_list, _daniel, maxParallelThreads)
+            // Hergen hergen = new Hergen(_list, _daniel, _sendThreadCount)
         }
         //Testaufrufe von johannes
         void TestJohannes()
         {
-            //Variablen für Ordner, etc
-            string dirInput;
-
-            //Abfrage für maximale Anzahl paralleler Threads
-            _readThreadCount = AbfrageAnzahlThreads("Mengenangabe für Threads beim Auslesen der Dateien (Default: 3)", 3);
-            
-            //Abfrage des Verzeichnispfades
-            Console.WriteLine("Bitte Pfad des zu durchsuchenden Verzeichnisses angeben.");
-            dirInput = Console.ReadLine();
-
-            //Konvertieren des Inputs zu einem Verzeichnispfad
-            var rootDir = new DirectoryInfo(dirInput);
-
             //Starten des Thread-Controllers
-            Johannes johannes = new Johannes(rootDir, _readThreadCount);
+            Johannes johannes = new Johannes(_rootDirectory, _readThreadCount);
 
             //Ausgabe der XML-Dateien ist in C:\XML\
-            johannes.Controller();
+            _list = johannes.Controller();
             
-
             //Warten auf Nutzeingabe zum beenden.
             Console.WriteLine("Auslesen Fertig! - Warte auf Internet");
             Console.ReadLine();
-            
         }
 
         private void AbfrageGesamt()

@@ -61,11 +61,12 @@ namespace Client
 
             // RootDoc abarbeiten (Letzter Eintrag in _list)
             Worker(_list[_list.Count() - 1]);
-
         }
         private void Worker(XDocument Doc)
         {
+            // _daniel.ConnectionOpen();
             // _daniel.Send(Doc);
+            // _daniel.ConnectionClose();
 
             // Debugmessage
             Console.WriteLine("Datei übertragen.");
