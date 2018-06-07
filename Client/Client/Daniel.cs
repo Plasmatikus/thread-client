@@ -12,7 +12,12 @@ using System.Threading;
  * Fach: Threadprogrammierung
  * Aufgabe:
  * 
- * Anmerkung(en):
+ * 
+ * Anmerkung(en): new Thread(delegate ()
+                    {
+                    server}).Start();
+
+                   
  */
 
 namespace Client
@@ -22,6 +27,8 @@ namespace Client
 
             public static void StartClient()
             {
+            new Thread(delegate () { Servertest1.SynchronousSocketListener.StartListening(); }).Start();
+
             // Data buffer for incoming data.  
             byte[] bytes = new byte[1024];
 
@@ -31,7 +38,6 @@ namespace Client
 
                 // Establish the remote endpoint for the socket.  
                 // This example uses port 11000 on the local computer.
-
 
 
                 IPHostEntry ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
@@ -44,14 +50,18 @@ namespace Client
                     Console.WriteLine(ip.ToString());
                 }
 
-
                 IPAddress ipAddress = ipHostInfo.AddressList[0];
-                IPEndPoint remoteEP = new IPEndPoint(ipAddress, 11000);
-                
+                IPEndPoint remoteEP = new IPEndPoint(ipAddress, 11001);
+
+                Socket sock = new Socket(AddressFamily.InterNetworkV6, SocketType.Stream, ProtocolType.Tcp);
+                sock.SetSocketOption(SocketOptionLevel.IPv6, (SocketOptionName)27, 0);
+                sock.Bind(new IPEndPoint(IPAddress.IPv6Any, 11001));
+                sock.Listen(4);
+                    
+                Console.WriteLine("Client has connected successfully with the server");
 
                 //Create a TCP/IP  socket.  
-                Socket sender = new Socket(ipAddress.AddressFamily,
-                SocketType.Stream, ProtocolType.Tcp);
+                Socket sender = new Socket(ipAddress.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
 
                 // Connect the socket to the remote endpoint. Catch any errors.  
                 try
@@ -68,7 +78,8 @@ namespace Client
                     // Send the data through the socket.  
                     int bytesSent = sender.Send(msg);
 
-                    // Receive the response from the remote device.  
+                    // Receive the response from the remote device. 
+                    Console.WriteLine("Wait on the answer from the server...");
                     int bytesRec = sender.Receive(bytes);
                     Console.WriteLine("Echoed test = {0}",
                         Encoding.ASCII.GetString(bytes, 0, bytesRec));
