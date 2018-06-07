@@ -19,188 +19,90 @@ namespace Client
 {
     class Daniel
     {
-          
-        public class StateObject
-        {
-            // Client socket.  
-            public Socket workSocket = null;
-            // Größe des Buffers.  
-            public const int BufferSize = 256;
-            // Erhaltende Infos speichern -> wieder im Buffer.  
-            public byte[] buffer = new byte[BufferSize];
-            // Erhaltende data string.  
-            public StringBuilder sb = new StringBuilder();
-        }
-
-        public class AsynchronousClient
-        {
-            // Die port Nummer des Servers  
-            private const int port = 11000;
-
-            // ManualResetEvent instances signal completion.  
-            private static ManualResetEvent connectDone =
-                new ManualResetEvent(false);
-            private static ManualResetEvent sendDone =
-                new ManualResetEvent(false);
-            private static ManualResetEvent receiveDone =
-                new ManualResetEvent(false);
-
-            // Die Antwort vom Server.  
-            private static String response = String.Empty;
 
             public static void StartClient()
             {
-                // Versuche zum Server zu verbinden  
-                try
-                {
-                     
-                    Console.WriteLine("Versuche auf den Remote zuzugreifen");
-                    IPHostEntry ipHostInfo = Dns.GetHostEntry("192.168.2.1");
-                    IPAddress ipAddress = ipHostInfo.AddressList[0];
-                    IPEndPoint remoteEP = new IPEndPoint(ipAddress, port);
+            // Data buffer for incoming data.  
+            byte[] bytes = new byte[1024];
 
-                    // Erstelle einen TCP/IP socket.  
-                    Socket client = new Socket(ipAddress.AddressFamily,
-                        SocketType.Stream, ProtocolType.Tcp);
-
-                    // Verbinde zum Endpunkt des Servers 
-                    client.BeginConnect(remoteEP,
-                        new AsyncCallback(ConnectCallback), client);
-                    connectDone.WaitOne();
-
-                    // Das hier wäre eine Testnachricht  
-                    Send(client, "This is a test<EOF>");
-                    sendDone.WaitOne();
-
-                    //Erhalte die Antwort vom Server  
-                    Receive(client);
-                    receiveDone.WaitOne();
-
-                    // Schreibe die Antwort des Servers  
-                    Console.WriteLine("Response received : {0}", response);
-
-                    // Schließe den Socket wieder  
-                    client.Shutdown(SocketShutdown.Both);
-                    client.Close();
-
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.ToString());
-                }
-            }
-
-            private static void ConnectCallback(IAsyncResult ar)
+            // Connect to a remote device.  
+            try
             {
+
+                // Establish the remote endpoint for the socket.  
+                // This example uses port 11000 on the local computer.
+
+
+
+                IPHostEntry ipHostInfo = Dns.GetHostEntry(Dns.GetHostName());
+                string HostName = Dns.GetHostName();
+                Console.WriteLine("Host Name of machine =" + HostName);
+                IPAddress[] ipaddress = Dns.GetHostAddresses(HostName);
+                Console.WriteLine("IP Address of Machine is");
+                foreach (IPAddress ip in ipaddress)
+                {
+                    Console.WriteLine(ip.ToString());
+                }
+
+
+                IPAddress ipAddress = ipHostInfo.AddressList[0];
+                IPEndPoint remoteEP = new IPEndPoint(ipAddress, 11000);
+                
+
+                //Create a TCP/IP  socket.  
+                Socket sender = new Socket(ipAddress.AddressFamily,
+                SocketType.Stream, ProtocolType.Tcp);
+
+                // Connect the socket to the remote endpoint. Catch any errors.  
                 try
                 {
-                    // Rufe das Socket vom objekt ab  
-                    Socket client = (Socket)ar.AsyncState;
-
-                    // Vervollständige die Verbindung  
-                    client.EndConnect(ar);
+                    sender.Connect(remoteEP);
 
                     Console.WriteLine("Socket connected to {0}",
-                        client.RemoteEndPoint.ToString());
+                    
+                        sender.RemoteEndPoint.ToString());
 
-                    // Signal, dass die Verbindung steht  
-                    connectDone.Set();
+                    // Encode the data string into a byte array.  
+                    byte[] msg = Encoding.ASCII.GetBytes("This is a test<EOF>");
+
+                    // Send the data through the socket.  
+                    int bytesSent = sender.Send(msg);
+
+                    // Receive the response from the remote device.  
+                    int bytesRec = sender.Receive(bytes);
+                    Console.WriteLine("Echoed test = {0}",
+                        Encoding.ASCII.GetString(bytes, 0, bytesRec));
+
+                    // Release the socket.  
+                    sender.Shutdown(SocketShutdown.Both);
+                    sender.Close();
+
+                }
+                catch (ArgumentNullException ane)
+                {
+                    Console.WriteLine("ArgumentNullException : {0}", ane.ToString());
+                    Console.ReadKey();
+                }
+                catch (SocketException se)
+                {
+                    Console.WriteLine("SocketException : {0}", se.ToString());
+                    Console.ReadKey();
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine(e.ToString());
+                    Console.WriteLine("Unexpected exception : {0}", e.ToString());
+                    Console.ReadKey();
                 }
-            }
 
-            private static void Receive(Socket client)
+            }
+            catch (Exception e)
             {
-                try
-                {
-                    // Erstelle ein state object.  
-                    StateObject state = new StateObject();
-                    state.workSocket = client;
-
-                    // Beginne mit dem Erhalten der Daten vom Server 
-                    client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-                        new AsyncCallback(ReceiveCallback), state);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.ToString());
-                }
+                Console.WriteLine(e.ToString());
             }
-
-            private static void ReceiveCallback(IAsyncResult ar)
-            {
-                try
-                {
-                     
-                    StateObject state = (StateObject)ar.AsyncState;
-                    Socket client = state.workSocket;
-
-                    // Lese die Daten vom Server 
-                    int bytesRead = client.EndReceive(ar);
-
-                    if (bytesRead > 0)
-                    {
-                        // Mögliche zusätzliche Daten, die währenddessen erhalten wurden, somit sollen die gespeichert werden     
-                        state.sb.Append(Encoding.ASCII.GetString(state.buffer, 0, bytesRead));
-
-                        // Hole des Rest der Daten  
-                        client.BeginReceive(state.buffer, 0, StateObject.BufferSize, 0,
-                            new AsyncCallback(ReceiveCallback), state);
-                    }
-                    else
-                    {
-                        // Alle Daten, die angekommen sind und convertiere 
-                        if (state.sb.Length > 1)
-                        {
-                            response = state.sb.ToString();
-                        }
-                        // Signal, dass alle Bytes angekommen sind 
-                        receiveDone.Set();
-                    }
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.ToString());
-                }
-            }
-
-            private static void Send(Socket client, String data)
-            {
-                // Convertiere den String in ASCII  
-                byte[] byteData = Encoding.ASCII.GetBytes(data);
-
-                // Sende die Daten zum Server 
-                client.BeginSend(byteData, 0, byteData.Length, 0,
-                    new AsyncCallback(SendCallback), client);
-            }
-
-            private static void SendCallback(IAsyncResult ar)
-            {
-                try
-                {
-                    // Erhalte den Socket vom State Objekt  
-                    Socket client = (Socket)ar.AsyncState;
-
-                    // Vervollstände das Verschicken der Daten zum Server  
-                    int bytesSent = client.EndSend(ar);
-                    Console.WriteLine("Sent {0} bytes to server.", bytesSent);
-
-                    // Signal, dass alles angekommen ist  
-                    sendDone.Set();
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.ToString());
-                }
-            }
-
-            
         }
+
+       
     }
-
-
 }
+
    
