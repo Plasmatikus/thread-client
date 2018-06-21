@@ -11,63 +11,69 @@ namespace Client
 {
     class Program
     {
+        string _serverAddress;
+        int _serverPort;
+        int _readThreadCount;
+        int _sendThreadCount;
+        DirectoryInfo _rootDirectory;
+        // Datentyp für Zyklenabfrage
+        List<XDocument> _list;
         static void Main(string[] args)
         {
-            //Variablen
-            //DataTable _datatable;
-            //Aufrufe
+            Program Test = new Program();
+            Test.Run();
+        }
+        void Run()
+        {
+            AbfrageGesamt();
+
             //TestJohannes();
-          
-            TestDaniel();
-            
+            //TestDaniel();
             //TestHergen();
         }
-        static void TestDaniel()
+        void TestDaniel()
         {
 
             Daniel.StartClient();
             
         }
-        static void TestHergen()
+        void TestHergen()
         {
-            int maxParallelThreads = 2;
-
-            //Abfrage für maximale Anzahl paralleler Threads
-            maxParallelThreads = AbfrageAnzahlThreads("Mengenangabe für Threads beim Übertragen der Daten (Default: 2)", 2);
-
-            // Hergen hergen = new Hergen(_table, _daniel, maxParallelThreads)
+            // Hergen hergen = new Hergen(_list, _daniel, _sendThreadCount)
         }
         //Testaufrufe von johannes
-        static void TestJohannes()
+        void TestJohannes()
         {
-            //Variablen für Ordner, etc
-            int maxParallelThreads;
-            string dirInput;
-
-            //Abfrage für maximale Anzahl paralleler Threads
-            maxParallelThreads = AbfrageAnzahlThreads("Mengenangabe für Threads beim Auslesen der Dateien (Default: 3)", 3);
-            
-            //Abfrage des Verzeichnispfades
-            Console.WriteLine("Bitte Pfad des zu durchsuchenden Verzeichnisses angeben.");
-            dirInput = Console.ReadLine();
-
-            //Konvertieren des Inputs zu einem Verzeichnispfad
-            var rootDir = new DirectoryInfo(dirInput);
-
             //Starten des Thread-Controllers
-            Johannes johannes = new Johannes(rootDir, maxParallelThreads);
+            Johannes johannes = new Johannes(_rootDirectory, _readThreadCount);
 
             //Ausgabe der XML-Dateien ist in C:\XML\
-            johannes.Controller();
+            _list = johannes.Controller();
             
-
             //Warten auf Nutzeingabe zum beenden.
             Console.WriteLine("Auslesen Fertig! - Warte auf Internet");
             Console.ReadLine();
-            
         }
 
-        private static int AbfrageAnzahlThreads(string message, int maxParallelThreads)
+        private void AbfrageGesamt()
+        {
+            //Abfrage für maximale Anzahl paralleler Threads beim Auslesen
+            _readThreadCount = AbfrageAnzahlThreads("Mengenangabe für Threads beim Auslesen der Dateien (Default: 3)", 3);
+
+            //Abfrage für maximale Anzahl paralleler Threads beim Übertragen
+            _sendThreadCount = AbfrageAnzahlThreads("Mengenangabe für Threads beim Übertragen der Daten (Default: 2)", 2);
+
+            //Abfrage für Rootdirectory in dem Dateien ausgelesen werden
+            _rootDirectory = AbfrageRootDirectory();
+
+            //Abfrage IP-Adresse vom Server als Sendeziel der Daten
+            _serverAddress = AbfrageServerAdresse();
+
+            //Abfrage Portnummer vom Server
+            _serverPort = AbfrageServerPort();
+        }
+
+        private int AbfrageAnzahlThreads(string message, int maxParallelThreads)
         {
             //Abfrage für maximale Anzahl paralleler Threads
             bool inputErr = true;
@@ -109,6 +115,47 @@ namespace Client
                 }
             }
             return maxParallelThreads;
+        }
+
+        private DirectoryInfo AbfrageRootDirectory()
+        {
+            //Variablen für Ordner
+            string dirInput;
+
+            //Abfrage des Verzeichnispfades
+            Console.WriteLine("Bitte Pfad des zu durchsuchenden Verzeichnisses angeben.");
+            dirInput = Console.ReadLine();
+
+            //Konvertieren des Inputs zu einem Verzeichnispfad
+            var rootDir = new DirectoryInfo(dirInput);
+            return rootDir;
+        }
+
+        private string AbfrageServerAdresse()
+        {
+            string ip;
+            Console.WriteLine("Bitte geben Sie die IP-Adresse oder den Hostnamen des Zielservers an.");
+            ip = Console.ReadLine();
+            return ip;
+        }
+
+        private int AbfrageServerPort()
+        {
+            int port = 11001;
+            bool tryout = false;
+            while (tryout == false)
+            {
+                Console.WriteLine("Bitte geben Sie die Portnummer des Zielservers an.");
+                if (int.TryParse(Console.ReadLine(), out port))
+                {
+                    tryout = true;
+                }
+                else
+                {
+                    Console.WriteLine("Fehler aufgetreten: Nochmal versuchen");
+                }
+            }
+            return port;
         }
     }
 }
