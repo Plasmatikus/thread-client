@@ -16,7 +16,7 @@ namespace Client
         int _readThreadCount;
         int _sendThreadCount;
         DirectoryInfo _rootDirectory;
-        // Datentyp für Zyklenabfrage
+        DateTime _zykluszeit;
         List<XDocument> _list;
         static void Main(string[] args)
         {
@@ -71,6 +71,9 @@ namespace Client
 
             //Abfrage Portnummer vom Server
             _serverPort = AbfrageServerPort();
+
+            //Abfrage Zykluszeit
+            _zykluszeit = AbfrageZykluszeit();
         }
 
         private int AbfrageAnzahlThreads(string message, int maxParallelThreads)
@@ -120,11 +123,22 @@ namespace Client
         private DirectoryInfo AbfrageRootDirectory()
         {
             //Variablen für Ordner
-            string dirInput;
-
-            //Abfrage des Verzeichnispfades
-            Console.WriteLine("Bitte Pfad des zu durchsuchenden Verzeichnisses angeben.");
-            dirInput = Console.ReadLine();
+            string dirInput = "C:\\";
+            bool error = true;
+            while(error)
+            {
+                try
+                {
+                    //Abfrage des Verzeichnispfades
+                    Console.WriteLine("Bitte Pfad des zu durchsuchenden Verzeichnisses angeben.");
+                    dirInput = Console.ReadLine();
+                    error = false;
+                }
+                catch
+                {
+                    Console.WriteLine("Fehlerhafte Eingabe! Bitte antworten Sie nochmal.");
+                }
+            }
 
             //Konvertieren des Inputs zu einem Verzeichnispfad
             var rootDir = new DirectoryInfo(dirInput);
@@ -156,6 +170,48 @@ namespace Client
                 }
             }
             return port;
+        }
+
+        private DateTime AbfrageZykluszeit()
+        {
+            DateTime zyklus;
+            int min = 5;
+            bool tryout = false;
+            bool inputTest = false;
+            while (inputTest == false)
+            {
+                Console.WriteLine("Wollen Sie die  Anzahl der parallel benutzten Threads angeben? (Y/n)");
+                string inputYesNo;
+                inputYesNo = Console.ReadLine();
+                if (inputYesNo == "Y" || inputYesNo == "y" || inputYesNo == "Yes" || inputYesNo == "YES" || inputYesNo == "yes" ||
+                    inputYesNo == "N" || inputYesNo == "n" || inputYesNo == "No" || inputYesNo == "NO" || inputYesNo == "no" ||
+                    inputYesNo == "")
+                {
+                    inputTest = true;
+                    if (inputYesNo == "Y" || inputYesNo == "y" || inputYesNo == "Yes" || inputYesNo == "YES" || inputYesNo == "yes" || inputYesNo == "")
+                    {
+                        while (tryout == false)
+                        {
+                            Console.WriteLine("Bitte die Zeit für den Sendeintervall angeben. (In Minuten)");
+                            if (int.TryParse(Console.ReadLine(), out min))
+                            {
+                                tryout = true;
+                            }
+                            else
+                            {
+                                Console.WriteLine("Fehlerhafte Eingabe! Bitte antworten Sie nochmal.");
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    Console.WriteLine("Fehlerhafte Eingabe! Bitte antworten Sie nochmal.");
+                }
+            }
+            
+            zyklus = new DateTime(0, 0, 0, 0, min, 0);
+            return zyklus;
         }
     }
 }
