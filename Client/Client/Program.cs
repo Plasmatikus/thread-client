@@ -27,33 +27,22 @@ namespace Client
         {
             AbfrageGesamt();
 
-            TestJohannes();
-            //TestDaniel();
-            //TestHergen();
-        }
-        void TestDaniel()
-        {
 
-            //Daniel.StartClient();
-            
-        }
-        void TestHergen()
-        {
-            // Hergen hergen = new Hergen(_list, _daniel, _sendThreadCount)
-        }
-        //Testaufrufe von johannes
-        void TestJohannes()
-        {
-            //Starten des Thread-Controllers
+            //Erstellen des Auslesers
             Johannes johannes = new Johannes(_rootDirectory, _readThreadCount);
-
-            //Ausgabe der XML-Dateien ist in C:\XML\
-            _list = johannes.Controller();
             
-            //Warten auf Nutzeingabe zum beenden.
-            Console.WriteLine("Auslesen Fertig! - Warte auf Internet");
-            Console.ReadLine();
+            //Starten des Auslesers
+            //_list = johannes.Controller();
+
+            //Statusausgabe
+            Console.WriteLine("Auslesen des Dateisystem erfolgreich beendet!");
+
+            //Erstellen des Senders
+            Sender sender = new Sender(_list, _sendThreadCount, _ipaddress,_port);
+            
+
         }
+    
 
         private void AbfrageGesamt()
         {
@@ -171,7 +160,7 @@ namespace Client
             }
             return port;
         }
-        /*
+        
         private DateTime AbfrageZykluszeit()
         {
             DateTime zyklus;
@@ -213,6 +202,6 @@ namespace Client
             zyklus = new DateTime(0, 0, 0, 0, min, 0);
             return zyklus;
         }
-        */
+        
     }
 }
