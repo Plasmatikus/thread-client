@@ -19,11 +19,11 @@ using System.Threading;
 
                    
  */
-
+ 
 namespace Client
 {
     class Daniel
-    {
+    {/*
 
             public static void StartClient()
             {
@@ -112,8 +112,6 @@ namespace Client
             }
         }
 
-       
+       */
     }
 }
-
-   

@@ -22,7 +22,8 @@ namespace Client
         //Semaphor zur steuerung der Anzahl paralleler Threads
         public System.Threading.Semaphore S;
         private DirectoryInfo _rootDir;
-        List<XDocument> _subxmls = new List<XDocument>();
+        List<byte[]> _subxmls = new List<byte[]>();
+        private string _tempPath = Path.GetTempPath();
         #endregion
 
         #region ctor
@@ -35,15 +36,18 @@ namespace Client
 
         #region Methoden
         //Controller für die Operationen
-        public List<XDocument> Controller()
+        public List<byte[]> Controller()
         {
             //Säubern der Liste, just to be sure
             _subxmls.Clear();
 
-            //Anlegen des XML Verzechnisses, gegebenenfalls vorweg löschen von alten Dateien
-            System.IO.Directory.CreateDirectory("C:\\XML\\");
+            //Zusammenbauen des Pfades zum Speichern der Temp-Dateien
+            string savePath = _tempPath + @"XML\";
 
-            System.IO.DirectoryInfo di = new DirectoryInfo("C:\\XML\\");
+            //Anlegen des XML Verzechnisses, gegebenenfalls vorweg löschen von alten Dateien
+            System.IO.Directory.CreateDirectory(savePath);
+
+            System.IO.DirectoryInfo di = new DirectoryInfo(savePath);
 
             foreach (FileInfo file in di.GetFiles())
             {
@@ -77,7 +81,7 @@ namespace Client
                     new Thread(delegate ()
                     {
                     //Spawnen des Workers
-                    Worker(subDir, clientName, ref _subxmls);
+                    Worker(subDir, clientName, ref _subxmls, savePath);
                     // Wenn dies der letzte Thread ist, signal absetzen
                     if (Interlocked.Decrement(ref toProcess) == 0)
                         {
@@ -115,17 +119,23 @@ namespace Client
             XDocument rootXMLdoc = new XDocument(
                 new XDeclaration("1.0", "utf-8", "yes"),
                 rootXML);
-            _subxmls.Add(rootXMLdoc);
 
-            //Schreiben des XML in Datei
-            //string savename = "\\XML\\" + "RootDir" + ".xml";
-            //rootXML.Save(savename);
+            //_subxmls.Add(rootXMLdoc);
+
+            //Schreiben des XML in Datei - zum Debuggen und umwandeln in byte[]
+            string savename = savePath + "RootDir" + ".xml";
+            rootXML.Save(savename);
+
+
+            //Schreiben des bytearrays in die Liste
+            _subxmls.Add(File.ReadAllBytes(savename));
+
 
             return _subxmls;
 
         }
         //Worker Methode
-        private void Worker(DirectoryInfo workDir, string client, ref List<XDocument> subxmls)
+        private void Worker(DirectoryInfo workDir, string client, ref List<byte[]> subxmls, string savePath)
         {
             try
             {
@@ -142,17 +152,20 @@ namespace Client
                 XDocument rootXMLdoc = new XDocument(
                     new XDeclaration("1.0", "utf-8", "yes"),
                     tree);
-                subxmls.Add(rootXMLdoc);
 
                 //Ausführen der XML-GeneratorMethode
                 tree.Add(GetDirectoryXML(workDir));
 
+                //Speichern des XDocuments in der Liste
+                //subxmls.Add(rootXMLdoc);
 
                 //Debug: Speichern des XDocuments vor dem Umwandlen zum string.
                 //Test warum gewisse XDocuments leer bleiben. Ergebnis: Alle XDocuments sind befüllt ...
-                //string savename = "\\XML\\" + workDir + ".xml";
-                //tree.Save(savename);
-                
+                string savename = savePath + workDir + ".xml";
+                tree.Save(savename);
+
+                subxmls.Add(File.ReadAllBytes(savename));
+
             }
 
             finally

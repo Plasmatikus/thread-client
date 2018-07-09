@@ -17,7 +17,7 @@ namespace Client
         int _sendThreadCount;
         DirectoryInfo _rootDirectory;
         DateTime _zykluszeit;
-        List<XDocument> _list;
+        List<byte[]> _list;
         static void Main(string[] args)
         {
             Program Test = new Program();
@@ -27,14 +27,14 @@ namespace Client
         {
             AbfrageGesamt();
 
-            //TestJohannes();
+            TestJohannes();
             //TestDaniel();
             //TestHergen();
         }
         void TestDaniel()
         {
 
-            Daniel.StartClient();
+            //Daniel.StartClient();
             
         }
         void TestHergen()
@@ -73,7 +73,7 @@ namespace Client
             _serverPort = AbfrageServerPort();
 
             //Abfrage Zykluszeit
-            _zykluszeit = AbfrageZykluszeit();
+            //_zykluszeit = AbfrageZykluszeit();
         }
 
         private int AbfrageAnzahlThreads(string message, int maxParallelThreads)
@@ -171,7 +171,7 @@ namespace Client
             }
             return port;
         }
-
+        /*
         private DateTime AbfrageZykluszeit()
         {
             DateTime zyklus;
@@ -213,5 +213,6 @@ namespace Client
             zyklus = new DateTime(0, 0, 0, 0, min, 0);
             return zyklus;
         }
+        */
     }
 }
