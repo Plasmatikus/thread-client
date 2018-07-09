@@ -7,13 +7,6 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-/* Author: Johannes Schuhn
- * Matr.Nr.: 70445161
- * Fach: Threadprogrammierung(?)
- * Aufgabe: Dateisystem auslesen und XML generieren
- * 
- * Anmerkung(en):
- */
 namespace Client
 {
     class Johannes

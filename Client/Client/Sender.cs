@@ -28,11 +28,10 @@ namespace Client
             _ipaddress = ipaddress;
             _port = port;
         }
-
         #endregion
 
         #region methods
-        private void Run()
+        public void Run()
         {
             ManualResetEvent resetEvent = new ManualResetEvent(false);
             int toProcess = _list.Count() - 1;
@@ -53,16 +52,13 @@ namespace Client
 
             //Warten bis alle Threads fertig sind
             resetEvent.WaitOne();
-            Console.WriteLine("Alle Threads fertig.");
 
             // RootDoc abarbeiten (Letzter Eintrag in _list)
             Worker(_list[_list.Count() - 1]);
         }
-
         private void Worker(byte[] bear)
         {
             bool sent = false;
-            
             while (!sent)
             {
                 try
@@ -79,12 +75,7 @@ namespace Client
                     Thread.Sleep(30);
                 }
             }
-
         }
-
-    
-
         #endregion
-
     }
 }
