@@ -32,13 +32,13 @@ namespace Client
             Johannes johannes = new Johannes(_rootDirectory, _readThreadCount);
             
             //Starten des Auslesers
-            //_list = johannes.Controller();
+            _list = johannes.Controller();
 
             //Statusausgabe
             Console.WriteLine("Auslesen des Dateisystem erfolgreich beendet!");
 
             //Erstellen des Senders
-            Sender sender = new Sender(_list, _sendThreadCount, _ipaddress,_port);
+            Sender sender = new Sender(_list, _sendThreadCount, _ipaddress, _port);
             
 
         }
