@@ -28,12 +28,12 @@ namespace Client
             _ipaddress = ipaddress;
             _port = port;
         }
-
         #endregion
 
         #region methods
-        private void Run()
+        public void Run()
         {
+            // Erstelle den Lichtschalter
             ManualResetEvent resetEvent = new ManualResetEvent(false);
             int toProcess = _list.Count() - 1;
 
@@ -43,7 +43,7 @@ namespace Client
                 {
                     //Spawnen des Workers
                     Worker(_list[i]);
-                    // Wenn dies der letzte Thread ist, Signal absetzen
+                    // Wenn dies der letzte Thread ist, Signal absetzen (Der Letzte macht das Licht aus!)
                     if (Interlocked.Decrement(ref toProcess) == 0)
                     {
                         resetEvent.Set();
@@ -51,9 +51,8 @@ namespace Client
                 }).Start();
             }
 
-            //Warten bis alle Threads fertig sind
+            // Warten bis alle Threads fertig sind (Wenn das Licht ausgeht!)
             resetEvent.WaitOne();
-            Console.WriteLine("Alle Threads fertig.");
 
             // RootDoc abarbeiten (Letzter Eintrag in _list)
             Worker(_list[_list.Count() - 1]);
@@ -62,11 +61,11 @@ namespace Client
         private void Worker(byte[] bear)
         {
             bool sent = false;
-            
             while (!sent)
             {
                 try
                 {
+                    // Erstellen des Sockets
                     Socket mysocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
                     mysocket.Connect(_ipaddress, _port);
                     mysocket.Send(bear);
@@ -79,12 +78,7 @@ namespace Client
                     Thread.Sleep(30);
                 }
             }
-
         }
-
-    
-
         #endregion
-
     }
 }
