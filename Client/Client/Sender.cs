@@ -37,12 +37,12 @@ namespace Client
             ManualResetEvent resetEvent = new ManualResetEvent(false);
             int toProcess = _list.Count() - 1;
 
-            for (int i = 0; i < _list.Count() - 2; i++)
+            for (int i = 0; i <= _list.Count() - 2; i++)
             {
                 new Thread(delegate ()
                 {
                     //Spawnen des Workers
-                    Worker(_list[i]);
+                    Worker(_list[i - 1]);
                     // Wenn dies der letzte Thread ist, Signal absetzen (Der Letzte macht das Licht aus!)
                     if (Interlocked.Decrement(ref toProcess) == 0)
                     {
@@ -65,17 +65,38 @@ namespace Client
             {
                 try
                 {
-                    // Erstellen des Sockets
-                    Socket mysocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                    mysocket.Connect(_ipaddress, _port);
-                    mysocket.Send(bear);
-                    mysocket.Close();
-                    Console.WriteLine("Ein Bär wurde gesendet.");
-                    sent = true;
+                    //Warten bis ein Workslot freigegeben wird
+                    S.WaitOne();
+
+                    //Debug-Output
+                    Console.WriteLine("Bär senden gestartet!");
+
+                    try
+                    {
+                        // Erstellen des Sockets
+                        Socket mysocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                        mysocket.Connect(_ipaddress, _port);
+                        mysocket.Send(bear);
+                        //Debug-Warten, um dem Server etwas Zeit zu geben.
+                        Thread.Sleep(100);
+                        mysocket.Close();
+
+                        sent = true;
+                        //Thread.Sleep(100);
+                    }
+                    catch
+                    {
+                        Thread.Sleep(30);
+                    }
+
+
                 }
-                catch
+                finally
                 {
-                    Thread.Sleep(30);
+                    // Freigeben des Workslots
+                    S.Release();
+                    Console.WriteLine("Ein Bär wurde gesendet.");
+
                 }
             }
         }
