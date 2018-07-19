@@ -53,9 +53,10 @@ namespace Client
 
             // Warten bis alle Threads fertig sind (Wenn das Licht ausgeht!)
             resetEvent.WaitOne();
-
+            
             // RootDoc abarbeiten (Letzter Eintrag in _list)
             Worker(_list[_list.Count() - 1]);
+
         }
 
         private void Worker(byte[] bear)
@@ -69,7 +70,7 @@ namespace Client
                     S.WaitOne();
 
                     //Debug-Output
-                    Console.WriteLine("Bär senden gestartet!");
+                    Console.WriteLine("Sendethread gestartet!");
 
                     try
                     {
@@ -82,7 +83,6 @@ namespace Client
                         mysocket.Close();
 
                         sent = true;
-                        //Thread.Sleep(100);
                     }
                     catch
                     {
@@ -95,7 +95,7 @@ namespace Client
                 {
                     // Freigeben des Workslots
                     S.Release();
-                    Console.WriteLine("Ein Bär wurde gesendet.");
+                    Console.WriteLine("Sendethread fertig.");
 
                 }
             }
