@@ -53,16 +53,20 @@ namespace Client
                 }
                 _dateTimeStart = _dateTimeTest;
 
+
                 //Erstellen des Auslesers
                 Johannes johannes = new Johannes(_rootDirectory, _readThreadCount);
+
 
                 //Starten des Auslesers
                 Console.WriteLine("Auslesen des Dateisystems gestartet!");
                 _list = johannes.Controller();
                 Console.WriteLine("Auslesen des Dateisystems erfolgreich beendet!");
 
+
                 //Erstellen des Senders
                 Sender sender = new Sender(_list, _sendThreadCount, _ipaddress, _port);
+
 
                 //Starten des Senders
                 Console.WriteLine("Übertragen der Daten gestartet!");
@@ -108,13 +112,16 @@ namespace Client
                 Console.WriteLine("Wollen Sie die  Anzahl der parallel benutzten Threads angeben? (Y/n)");
                 string inputYesNo;
                 inputYesNo = Console.ReadLine();
+
                 if (inputYesNo == "Y" || inputYesNo == "y" || inputYesNo == "Yes" || inputYesNo == "YES" || inputYesNo == "yes" ||
                     inputYesNo == "N" || inputYesNo == "n" || inputYesNo == "No" || inputYesNo == "NO" || inputYesNo == "no" ||
                     inputYesNo == "")
                 {
                     inputTest = true;
+
                     if (inputYesNo == "Y" || inputYesNo == "y" || inputYesNo == "Yes" || inputYesNo == "YES" || inputYesNo == "yes" || inputYesNo == "")
                     {
+
                         while (inputErr)
                         {
                             Console.WriteLine("Bitte die Anzahl paralleler Threads angeben(Ganzzahl):");
@@ -126,6 +133,7 @@ namespace Client
                             {
                                 inputErr = false;
                             }
+
                             else
                             {
                                 Console.WriteLine("Fehlerhafte Eingabe! Bitte antworten Sie nochmal.");
@@ -133,13 +141,16 @@ namespace Client
                         }
                     }
                 }
+
                 else
                 {
                     Console.WriteLine("Fehlerhafte Eingabe! Bitte antworten Sie nochmal.");
                 }
             }
+
             return maxParallelThreads;
         }
+
         private DirectoryInfo AbfrageRootDirectory()
         {
             //Variablen für Ordner
@@ -171,9 +182,12 @@ namespace Client
             //Konvertieren des Inputs zu einem Verzeichnispfad
             var rootDir = new DirectoryInfo(dirInput);
             return rootDir;
+
         }
+
         private IPAddress AbfrageServerAdresse()
         {
+
             IPAddress ip = IPAddress.Parse("127.0.0.1");
             bool tryout = false;
             string ipString = "127.0.0.1";
@@ -217,12 +231,16 @@ namespace Client
                     Console.WriteLine("Fehler aufgetreten: Nochmal versuchen");
                 }
             }
+
             return ip;
         }
+
         private int AbfrageServerPort()
         {
+
             int port = 11001;
             bool tryout = false;
+
             while (tryout == false)
             {
                 Console.WriteLine("Bitte geben Sie die Portnummer des Zielservers an.");
@@ -235,12 +253,16 @@ namespace Client
                     Console.WriteLine("Fehler aufgetreten: Nochmal versuchen");
                 }
             }
+
             return port;
         }
+
         private int AbfrageZykluszeit()
         {
+
             int zyklus = 0;
             bool tryout = false;
+
             while (tryout == false)
             {
                 Console.WriteLine("Bitte die Zeit für das Sendeintervall angeben. (In Minuten, zwischen 1 und 59)");
@@ -253,6 +275,7 @@ namespace Client
                     Console.WriteLine("Fehlerhafte Eingabe! Bitte antworten Sie nochmal.");
                 }
             }
+
             return zyklus;
         }
         #endregion

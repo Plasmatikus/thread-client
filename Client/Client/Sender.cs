@@ -33,16 +33,17 @@ namespace Client
         #region methods
         public void Run()
         {
+            // Erstelle den Lichtschalter
             ManualResetEvent resetEvent = new ManualResetEvent(false);
             int toProcess = _list.Count() - 1;
 
-            for (int i = 0; i < _list.Count() - 2; i++)
+            for (int i = 0; i <= _list.Count() - 2; i++)
             {
                 new Thread(delegate ()
                 {
                     //Spawnen des Workers
-                    Worker(_list[i]);
-                    // Wenn dies der letzte Thread ist, Signal absetzen
+                    Worker(_list[i - 1]);
+                    // Wenn dies der letzte Thread ist, Signal absetzen (Der Letzte macht das Licht aus!)
                     if (Interlocked.Decrement(ref toProcess) == 0)
                     {
                         resetEvent.Set();
@@ -50,12 +51,14 @@ namespace Client
                 }).Start();
             }
 
-            //Warten bis alle Threads fertig sind
+            // Warten bis alle Threads fertig sind (Wenn das Licht ausgeht!)
             resetEvent.WaitOne();
-
+            
             // RootDoc abarbeiten (Letzter Eintrag in _list)
             Worker(_list[_list.Count() - 1]);
+
         }
+
         private void Worker(byte[] bear)
         {
             bool sent = false;
@@ -63,16 +66,37 @@ namespace Client
             {
                 try
                 {
-                    Socket mysocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                    mysocket.Connect(_ipaddress, _port);
-                    mysocket.Send(bear);
-                    mysocket.Close();
-                    Console.WriteLine("Ein Bär wurde gesendet.");
-                    sent = true;
+                    //Warten bis ein Workslot freigegeben wird
+                    S.WaitOne();
+
+                    //Debug-Output
+                    Console.WriteLine("Sendethread gestartet!");
+
+                    try
+                    {
+                        // Erstellen des Sockets
+                        Socket mysocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                        mysocket.Connect(_ipaddress, _port);
+                        mysocket.Send(bear);
+                        //Debug-Warten, um dem Server etwas Zeit zu geben.
+                        Thread.Sleep(100);
+                        mysocket.Close();
+
+                        sent = true;
+                    }
+                    catch
+                    {
+                        Thread.Sleep(30);
+                    }
+
+
                 }
-                catch
+                finally
                 {
-                    Thread.Sleep(30);
+                    // Freigeben des Workslots
+                    S.Release();
+                    Console.WriteLine("Sendethread fertig.");
+
                 }
             }
         }

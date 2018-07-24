@@ -47,7 +47,6 @@ namespace Client
                 file.Delete();
             }
             
-
             //Auslesen des Client Namens
             string clientName = System.Environment.MachineName;
             
@@ -56,11 +55,12 @@ namespace Client
             int folderCount = 0;
             foreach (var subDir in _rootDir.GetDirectories())
             {
-                if (!(subDir.ToString() == "home") || !(subDir.ToString() == "Users") || !(subDir.ToString() == "XML"))
+                if (!((subDir.Name.ToString() == "home") || (subDir.Name.ToString() == "Users") || (subDir.Name.ToString() == "XML")))
                 {
                     folderCount++;
                 }
             }
+
             //Anlegen des Reset-Events für das warten auf die Threads
             ManualResetEvent resetEvent = new ManualResetEvent(false);
             int toProcess = folderCount;
@@ -69,7 +69,7 @@ namespace Client
             //User /Home Verzeichnisse und das XML Verzeichnis werden wegen Privatsphäre und Programmstabilität ausgeschlossen
             foreach (var subDir in _rootDir.GetDirectories())
             {
-                if (!(subDir.ToString() == "home") || !(subDir.ToString() == "Users") || !(subDir.ToString() == "XML"))
+                if (!((subDir.Name.ToString() == "home") || (subDir.Name.ToString() == "Users") || (subDir.Name.ToString() == "XML")))
                 {
                     new Thread(delegate ()
                     {
@@ -87,7 +87,6 @@ namespace Client
             //Warten bis alle Threads fertig sind
             resetEvent.WaitOne();
             Console.WriteLine("Alle Threads fertig.");
-
 
             //Auslesen der Dateien des RootDir und einfügen ins "Root" XML
 
@@ -119,10 +118,8 @@ namespace Client
             string savename = savePath + "RootDir" + ".xml";
             rootXML.Save(savename);
 
-
             //Schreiben des bytearrays in die Liste
             _subxmls.Add(File.ReadAllBytes(savename));
-
 
             return _subxmls;
 
@@ -232,26 +229,11 @@ namespace Client
 
             return filesize;
         }
-        //Konverter für XDocuments zu String, der die Deklaration am Anfang erhält -- Inzwischen überflüssig
-        private string XDocumentToString(XDocument doc)
-        {
-            //Abfangen des Falls, dass ein leeres XDocument übergeben wird
-            //Lieber meine Exception als ein Programmabsturz ;)
-            if (doc == null)
-            {
-                throw new ArgumentNullException("doc");
-            }
-            //Erstellen eines neuen Stringbuilders
-            StringBuilder builder = new StringBuilder();
-            using (TextWriter writer = new StringWriter(builder))
-            {
-                doc.Save(writer);
-            }
-            return builder.ToString();
-        }
+
         //Rekursiver Ordner/Dateileser nach XML
         private XElement GetDirectoryXML(DirectoryInfo dir)
         {
+
             //Einfügen des aktuellen Verzeichnisses in die Struktur
             var DirXML = new XElement("verzeichnis", new XAttribute("name", dir.Name));
             try
@@ -267,14 +249,17 @@ namespace Client
                     DirXML.Add(new XElement("datei", new XAttribute("name", file.Name), new XAttribute("groesse", filesize)));
                 }
             }
+
             catch (System.UnauthorizedAccessException)
             {
                 DirXML.Add(new XElement("datei", new XAttribute("Fehler", "Zugriff verweigert")));
             }
+
             catch (Exception e)
             {
                 DirXML.Add(new XElement("datei", new XAttribute("Exception", e)));
             }
+
             //Rekursiver Aufruf zur Behandlung der Ordner
             try
             {
@@ -283,14 +268,17 @@ namespace Client
                     DirXML.Add(GetDirectoryXML(subDir));
                 }
             }
+
             catch (System.UnauthorizedAccessException)
             {
                 DirXML.Add(new XElement("verzeichnis", new XAttribute("Fehler", "Zugriff verweigert")));
             }
+
             catch (Exception e)
             {
                 DirXML.Add(new XElement("verzeichnis", new XAttribute("Exception", e)));
             }
+
             //Rückgabe des XML der Odernerstruktur als XElement
             return DirXML;
         }
