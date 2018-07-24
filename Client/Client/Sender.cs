@@ -76,7 +76,20 @@ namespace Client
                     {
                         // Erstellen des Sockets
                         Socket mysocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                        mysocket.Connect(_ipaddress, _port);
+                        //Verbindungsversuch, und neuversuch nach einer Sekunde bei misserfolg
+                        bool connect = false;
+                        while (!connect)
+                        {
+                            try
+                            {
+                                mysocket.Connect(_ipaddress, _port);
+                                connect = true;
+                            }
+                            catch
+                            {
+                                Thread.Sleep(1000);
+                            }
+                        }
                         mysocket.Send(bear);
                         //Debug-Warten, um dem Server etwas Zeit zu geben.
                         Thread.Sleep(100);
