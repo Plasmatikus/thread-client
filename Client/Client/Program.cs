@@ -176,12 +176,41 @@ namespace Client
         {
             IPAddress ip = IPAddress.Parse("127.0.0.1");
             bool tryout = false;
+            string ipString = "127.0.0.1";
+            byte[] partsByte = { 1, 2, 3, 4 };
             while (tryout == false)
             {
+                // Eingabe der IP-Adresse in String schreiben und aufsplitten in String-Array
                 Console.WriteLine("Bitte geben Sie die IP-Adresse des Zielservers an. (Format: 0.0.0.0)");
-                if (IPAddress.TryParse(Console.ReadLine(), out ip))
+                ipString = Console.ReadLine();
+                string[] parts = ipString.Split('.');
+
+                // Prüfen der Arraylänge (IP-Adresse braucht 4 Bytes)
+                if (parts.Count() == 4)
                 {
-                    tryout = true;
+                    // Testen der Arrayzellen mit negativer Logik
+                    // Nur wenn alle 4 Zellen geparsed werden konnten wird tryout auf True gesetzt
+                    if (Byte.TryParse(parts[0], out partsByte[0]) == false)
+                    {
+                        Console.WriteLine("Fehler aufgetreten: Nochmal versuchen");
+                    }
+                    else if (Byte.TryParse(parts[1], out partsByte[1]) == false)
+                    {
+                        Console.WriteLine("Fehler aufgetreten: Nochmal versuchen");
+                    }
+                    else if (Byte.TryParse(parts[2], out partsByte[2]) == false)
+                    {
+                        Console.WriteLine("Fehler aufgetreten: Nochmal versuchen");
+                    }
+                    else if (Byte.TryParse(parts[3], out partsByte[3]) == false)
+                    {
+                        Console.WriteLine("Fehler aufgetreten: Nochmal versuchen");
+                    }
+                    else
+                    {
+                        ip = IPAddress.Parse(ipString);
+                        tryout = true;
+                    }
                 }
                 else
                 {
