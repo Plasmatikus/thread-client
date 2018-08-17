@@ -53,9 +53,13 @@ namespace Client
 
             // Warten bis alle Threads fertig sind (Wenn das Licht ausgeht!)
             resetEvent.WaitOne();
+
+            Console.WriteLine("Sende Root ...");
             
             // RootDoc abarbeiten (Letzter Eintrag in _list)
             Worker(_list[_list.Count() - 1]);
+
+            Console.WriteLine("Senden Root abgeschlossen");
 
         }
 
@@ -90,7 +94,12 @@ namespace Client
                                 Thread.Sleep(1000);
                             }
                         }
+                        //Test für Kompatibilität mit Gruppe von Nico, Dennis und Benny -- EOF Marker beendet Übertragung
+                        //byte[] msg = Encoding.ASCII.GetBytes("<EOF>");
+                        
+                        //Senden!
                         mysocket.Send(bear);
+                        //mysocket.Send(msg);
                         //Debug-Warten, um dem Server etwas Zeit zu geben.
                         Thread.Sleep(100);
                         mysocket.Close();

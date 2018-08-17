@@ -6,6 +6,7 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml;
 using System.Xml.Linq;
 namespace Client
 {
@@ -14,6 +15,7 @@ namespace Client
         #region fields
         //Semaphor zur steuerung der Anzahl paralleler Threads
         public System.Threading.Semaphore S;
+        //Stammverzeichnis der Suche
         private DirectoryInfo _rootDir;
         List<byte[]> _subxmls = new List<byte[]>();
         private string _tempPath = Path.GetTempPath();
@@ -112,15 +114,21 @@ namespace Client
                 new XDeclaration("1.0", "utf-8", "yes"),
                 rootXML);
 
-            //_subxmls.Add(rootXMLdoc);
-
             //Schreiben des XML in Datei - zum Debuggen und umwandeln in byte[]
             string savename = savePath + "RootDir" + ".xml";
-            rootXML.Save(savename);
+            XmlWriterSettings settings = new XmlWriterSettings();
+            settings.Encoding = new UTF8Encoding(false); // True = Mit BOM , False = ohne BOM
+            settings.Indent = true;
+            settings.NewLineOnAttributes = true;
+            using (XmlWriter w = XmlWriter.Create(savename, settings))
+            {
+                rootXMLdoc.Save(w);
+            }
 
-            //Schreiben des bytearrays in die Liste
+            //Schreiben des Bytearrays in die Liste
             _subxmls.Add(File.ReadAllBytes(savename));
 
+            //Rückgabe der vollständigen Liste
             return _subxmls;
 
         }
@@ -147,12 +155,17 @@ namespace Client
                 tree.Add(GetDirectoryXML(workDir));
 
                 //Speichern des XDocuments in der Liste
-                //subxmls.Add(rootXMLdoc);
-
-                //Debug: Speichern des XDocuments vor dem Umwandlen zum string.
-                //Test warum gewisse XDocuments leer bleiben. Ergebnis: Alle XDocuments sind befüllt ...
+                //Erfolgreicher Test: Speichern mittels XmlWriter, dann einlesen mittel ReadAllBytes. Nicht schön, aber praktisch --> Debugging
                 string savename = savePath + workDir + ".xml";
-                tree.Save(savename);
+                XmlWriterSettings settings = new XmlWriterSettings();
+                //UTF8Encoding: True = mit BOM , False = ohne BOM (BOM = Byte Order Marker) --> False löst das "???" Problem am Anfang der Dateien
+                settings.Encoding = new UTF8Encoding(false);
+                settings.Indent = true;
+                settings.NewLineOnAttributes = true;
+                using (XmlWriter w = XmlWriter.Create(savename, settings))
+                {
+                    tree.Save(w);
+                }
 
                 subxmls.Add(File.ReadAllBytes(savename));
 
@@ -160,31 +173,10 @@ namespace Client
 
             finally
             {
-                // Freigeben des Workslots
+                //Freigeben des Workslots
                 S.Release();
                 Console.WriteLine("Thread " + workDir + " ist fertig");
             }
-        }
-        //DataTable Formatierer -- Inzwischen überflüssig
-        private DataTable FormatDataTable(DataTable table)
-        {
-            // Deklarieren der Spalten Variable
-            DataColumn column;
-
-            // Erstellen der Spalte für den Ordnernamen    
-            column = new DataColumn();
-            column.DataType = System.Type.GetType("System.String");
-            column.ColumnName = "Folder";
-            table.Columns.Add(column);
-
-            // Erstellen der Spalte für den zum String konvertierten XML-Baum.
-            column = new DataColumn();
-            column.DataType = System.Type.GetType("System.String");
-            column.ColumnName = "Tree";
-            table.Columns.Add(column);
-
-            //Rückgabe der formatierten Tabelle
-            return table;
         }
         //Dateigrößen Berechner
         private string CalcFileSize(long filelenght)
@@ -229,8 +221,7 @@ namespace Client
 
             return filesize;
         }
-
-        //Rekursiver Ordner/Dateileser nach XML
+        //Rekursiver Ordner-/Dateileser ins XML Format
         private XElement GetDirectoryXML(DirectoryInfo dir)
         {
 
