@@ -94,12 +94,9 @@ namespace Client
                                 Thread.Sleep(1000);
                             }
                         }
-                        //Test für Kompatibilität mit Gruppe von Nico, Dennis und Benny -- EOF Marker beendet Übertragung
-                        //byte[] msg = Encoding.ASCII.GetBytes("<EOF>");
                         
                         //Senden!
                         mysocket.Send(bear);
-                        //mysocket.Send(msg);
                         //Debug-Warten, um dem Server etwas Zeit zu geben.
                         Thread.Sleep(100);
                         mysocket.Close();
