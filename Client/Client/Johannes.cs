@@ -41,9 +41,7 @@ namespace Client
 
             //Anlegen des XML Verzechnisses, gegebenenfalls vorweg löschen von alten Dateien
             System.IO.Directory.CreateDirectory(savePath);
-
             System.IO.DirectoryInfo di = new DirectoryInfo(savePath);
-
             foreach (FileInfo file in di.GetFiles())
             {
                 file.Delete();
@@ -53,11 +51,11 @@ namespace Client
             string clientName = System.Environment.MachineName;
             
             //Ermitteln der Anzahl an Ordnern im Root Verzeichnis (Aus management Gründen)
-            //User/Home Verzeichnisse werden wegen Privatsphäre, und das XML Verzeichnis Programmstabilität, ausgeschlossen
+            //User&Home Verzeichnisse werden wegen Privatsphäre ausgeschlossen
             int folderCount = 0;
             foreach (var subDir in _rootDir.GetDirectories())
             {
-                if (!((subDir.Name.ToString() == "home") || (subDir.Name.ToString() == "Users") || (subDir.Name.ToString() == "XML")))
+                if (!((subDir.Name.ToString() == "home") || (subDir.Name.ToString() == "Users")))
                 {
                     folderCount++;
                 }
@@ -71,7 +69,7 @@ namespace Client
             //User /Home Verzeichnisse und das XML Verzeichnis werden wegen Privatsphäre und Programmstabilität ausgeschlossen
             foreach (var subDir in _rootDir.GetDirectories())
             {
-                if (!((subDir.Name.ToString() == "home") || (subDir.Name.ToString() == "Users") || (subDir.Name.ToString() == "XML")))
+                if (!((subDir.Name.ToString() == "home") || (subDir.Name.ToString() == "Users")))
                 {
                     new Thread(delegate ()
                     {
@@ -119,7 +117,7 @@ namespace Client
             XmlWriterSettings settings = new XmlWriterSettings();
             settings.Encoding = new UTF8Encoding(false); // True = Mit BOM , False = ohne BOM
             settings.Indent = true;
-            settings.NewLineOnAttributes = true;
+            settings.NewLineOnAttributes = false;
             using (XmlWriter w = XmlWriter.Create(savename, settings))
             {
                 rootXMLdoc.Save(w);
@@ -161,7 +159,7 @@ namespace Client
                 //UTF8Encoding: True = mit BOM , False = ohne BOM (BOM = Byte Order Marker) --> False löst das "???" Problem am Anfang der Dateien
                 settings.Encoding = new UTF8Encoding(false);
                 settings.Indent = true;
-                settings.NewLineOnAttributes = true;
+                settings.NewLineOnAttributes = false;
                 using (XmlWriter w = XmlWriter.Create(savename, settings))
                 {
                     tree.Save(w);
@@ -183,7 +181,7 @@ namespace Client
         {
             //Variable
             string filesize = "";
-            //kleiner Hack um Datentypbeschränkung in If-Bedingungen zu umgehen
+            //kleiner Hack um Datentypbeschränkung in If-Bedingungen zu umgehen(gemeint ist die GB Größe wegen des long)
             //Nachträglich konsequenterweise für alle Größen nachgetragen
             int B = 1024;
             int kB = 1024 * 1024;

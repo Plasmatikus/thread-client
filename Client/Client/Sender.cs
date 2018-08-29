@@ -18,6 +18,7 @@ namespace Client
         private System.Threading.Semaphore S;
         private IPAddress _ipaddress;
         private int _port;
+        ManualResetEvent waitForLoop = new ManualResetEvent(false);
         #endregion
 
         #region ctor
@@ -34,37 +35,47 @@ namespace Client
         public void Run()
         {
             // Erstelle den Lichtschalter
-            ManualResetEvent resetEvent = new ManualResetEvent(false);
+            ManualResetEvent waitAllWorkers = new ManualResetEvent(false);
             int toProcess = _list.Count() - 1;
+
+            //Debug Ausgabe
+            Console.WriteLine("Spawne " + (_list.Count()-1) + " Threads mit Listen ID 0 bis " + (_list.Count() - 2) + ".");
 
             for (int i = 0; i <= _list.Count() - 2; i++)
             {
+                waitForLoop.Reset();
+
+                Console.WriteLine("Spawne Thread für Listeneintrag "+ i);
                 new Thread(delegate ()
                 {
                     //Spawnen des Workers
-                    Worker(_list[i - 1]);
+                    Worker(_list[i], (i));
                     // Wenn dies der letzte Thread ist, Signal absetzen (Der Letzte macht das Licht aus!)
                     if (Interlocked.Decrement(ref toProcess) == 0)
                     {
-                        resetEvent.Set();
+                        waitAllWorkers.Set();
                     }
                 }).Start();
+                waitForLoop.WaitOne();
             }
 
             // Warten bis alle Threads fertig sind (Wenn das Licht ausgeht!)
-            resetEvent.WaitOne();
+            waitAllWorkers.WaitOne();
 
-            Console.WriteLine("Sende Root ...");
+            //Debug Ausgaben
+            Console.WriteLine("Sende das RootDoc, ListenID " + (_list.Count() - 1));
             
-            // RootDoc abarbeiten (Letzter Eintrag in _list)
-            Worker(_list[_list.Count() - 1]);
+            // RootDoc abarbeiten (Letzter Eintrag in _list) -- Übergabe des ResetEvents ist zwar sinnlos, aber nötig 
+            Worker(_list[_list.Count() - 1], (_list.Count()-1));
 
-            Console.WriteLine("Senden Root abgeschlossen");
+            //Debug Ausgabe
+            Console.WriteLine("Senden des RootDoc abgeschlossen.");
 
         }
 
-        private void Worker(byte[] bear)
+        private void Worker(byte[] bear, int listID)
         {
+            waitForLoop.Set();
             bool sent = false;
             while (!sent)
             {
@@ -74,7 +85,7 @@ namespace Client
                     S.WaitOne();
 
                     //Debug-Output
-                    Console.WriteLine("Sendethread gestartet!");
+                    Console.WriteLine("Sendethread gestartet! ID:"+listID);
 
                     try
                     {
@@ -94,7 +105,6 @@ namespace Client
                                 Thread.Sleep(1000);
                             }
                         }
-                        
                         //Senden!
                         mysocket.Send(bear);
                         //Debug-Warten, um dem Server etwas Zeit zu geben.
@@ -114,7 +124,7 @@ namespace Client
                 {
                     // Freigeben des Workslots
                     S.Release();
-                    Console.WriteLine("Sendethread fertig.");
+                    Console.WriteLine("Sendethread fertig.ID:" + listID);
 
                 }
             }
