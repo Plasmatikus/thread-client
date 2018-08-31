@@ -88,7 +88,9 @@ namespace Client
             resetEvent.WaitOne();
             Console.WriteLine("Alle Threads fertig.");
 
+            //
             //Auslesen der Dateien des RootDir und einfügen ins "Root" XML
+            //
 
             //Erzeugen des "Root" XML-Elements
             var rootXML = new XElement("client", new XAttribute("name", clientName));
@@ -112,7 +114,7 @@ namespace Client
                 new XDeclaration("1.0", "utf-8", "yes"),
                 rootXML);
 
-            //Schreiben des XML in Datei - zum Debuggen und umwandeln in byte[]
+            //Schreiben des XML in Datei zum Debuggen und umwandeln in byte[]
             string savename = savePath + "RootDir" + ".xml";
             XmlWriterSettings settings = new XmlWriterSettings();
             settings.Encoding = new UTF8Encoding(false); // True = Mit BOM , False = ohne BOM
@@ -126,7 +128,9 @@ namespace Client
             //Schreiben des Bytearrays in die Liste
             _subxmls.Add(File.ReadAllBytes(savename));
 
+            //
             //Rückgabe der vollständigen Liste
+            //
             return _subxmls;
 
         }
@@ -173,6 +177,7 @@ namespace Client
             {
                 //Freigeben des Workslots
                 S.Release();
+                //Debug Output - Signalisiern, dass der Thread fertig ist
                 Console.WriteLine("Thread " + workDir + " ist fertig");
             }
         }

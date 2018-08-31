@@ -18,7 +18,7 @@ namespace Client
         private System.Threading.Semaphore S;
         private IPAddress _ipaddress;
         private int _port;
-        ManualResetEvent waitForLoop = new ManualResetEvent(false);
+        private ManualResetEvent waitForLoop = new ManualResetEvent(false);
         #endregion
 
         #region ctor
@@ -91,7 +91,7 @@ namespace Client
                     {
                         // Erstellen des Sockets
                         Socket mysocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                        //Verbindungsversuch, und neuversuch nach einer Sekunde bei misserfolg
+                        // Verbindungsversuch, und neuversuch nach einer Sekunde bei misserfolg
                         bool connect = false;
                         while (!connect)
                         {
@@ -107,8 +107,9 @@ namespace Client
                         }
                         //Senden!
                         mysocket.Send(bear);
-                        //Debug-Warten, um dem Server etwas Zeit zu geben.
+                        // Debug-Warten, um dem Server etwas Zeit zu geben.
                         Thread.Sleep(100);
+                        // Schließen der Verbindung
                         mysocket.Close();
 
                         sent = true;
